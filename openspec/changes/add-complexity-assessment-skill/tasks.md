@@ -58,7 +58,7 @@
 - [x] 8.1 Написать общий SKILL.md с подготовкой evidence-профиля, вызовом после propose и повторной оценкой перед verify; проверить frontmatter, references и отсутствие автоматического запуска реализации или смены модели.
 - [x] 8.2 Проверить актуальные механизмы подключения пакета в Codex, Claude Code и Antigravity IDE и документировать их; выполнить smoke discovery одного version/digest во всех трёх клиентах без платного inference.
 - [x] 8.3 Подготовить README и воспроизводимый публичный example change → profile → four rankings → archive → replay; выполнить команды примера из чистого checkout и сверить golden result.
-- [ ] 8.4 Подключить CI для поддерживаемых Node/OS и закреплённого OpenSpec; проверить полный offline suite и archive integration без credentials, публикации и пропуска обязательных проверок.
+- [x] 8.4 Подключить CI для поддерживаемых Node/OS и закреплённого OpenSpec; проверить полный offline suite и archive integration без credentials, публикации и пропуска обязательных проверок.
 
 ## 9. Уточнения конфигуратора и effort-оценок
 
@@ -94,7 +94,7 @@
 
 ## Workflow follow-up
 
-- Раздел 10 реализован в пакете 0.3.0 (policy minimum-resource-with-time-penalty v1, config/overrides/report schema 3, evaluator/renderer 3; legacy-фикстуры 0.1.0 и 0.2.0 сохранены). При продолжении apply осталась только CI-приёмка 8.4: проверить результат workflow `openspec-assess-change` на GitHub для всех Node/OS и отметить 8.4 лишь при успешном прохождении всех обязательных шагов; прежний assessment, если он существует, проверить на stale после изменения planning-артефактов.
+- Раздел 10 реализован в пакете 0.3.0 (policy minimum-resource-with-time-penalty v1, config/overrides/report schema 3, evaluator/renderer 3; legacy-фикстуры 0.1.0 и 0.2.0 сохранены). CI-приёмка 8.4 подтверждена прогоном 43618025901 (коммит 3672cb0): Node 22/24/26 × Ubuntu/macOS/Windows, unit/lifecycle 161/161 и integration 3/3 без пропусков, OpenSpec CLI 2.0.0, без credentials; до этого CI выявил и помог исправить ошибки путей под Windows. Все задачи выполнены; прежний assessment, если он существует, проверить на stale после изменения planning-артефактов.
 - После реализации выполнить openspec-verify-change и review; артефакт assessment сам по себе не означает приёмку.
 - Архивировать этот change штатным workflow после принятия требований; не включать archive самого change в implementation checklist.
 - Перед публичной публикацией отдельно определить лицензию, release и способ распространения; материалы и примеры подготовлены для будущей статьи, публикация не выполняется автоматически.
