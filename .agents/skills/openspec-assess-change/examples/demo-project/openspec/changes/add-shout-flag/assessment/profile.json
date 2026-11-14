@@ -1,0 +1,35 @@
+{
+  "kind": "openspec-assess.profile",
+  "schemaVersion": 1,
+  "change": { "name": "add-shout-flag" },
+  "stage": "planning",
+  "scope": { "mode": "all-tasks" },
+  "evidence": [
+    { "id": "proposal", "kind": "artifact", "base": "change", "path": "proposal.md", "note": "why: emphatic greeting; impact: one source file and its test" },
+    { "id": "design", "kind": "artifact", "base": "change", "path": "design.md", "note": "additive option, no CLI flag" },
+    { "id": "tasks", "kind": "artifact", "base": "change", "path": "tasks.md", "note": "three tasks" },
+    { "id": "req-shout", "kind": "requirement", "base": "change", "path": "specs/greeting/spec.md", "locator": "Shout option", "note": "default output unchanged; shout returns upper case" },
+    { "id": "task-1-1", "kind": "task", "base": "change", "path": "tasks.md", "locator": "1.1", "note": "add the option in src/greet.mjs" },
+    { "id": "task-1-2", "kind": "task", "base": "change", "path": "tasks.md", "locator": "1.2", "note": "tests for default and shout output" },
+    { "id": "task-2-1", "kind": "task", "base": "change", "path": "tasks.md", "locator": "2.1", "note": "document the option in docs/usage.md" },
+    { "id": "src-greet", "kind": "file", "base": "repo", "path": "src/greet.mjs", "note": "single exported function, 3 lines of logic" },
+    { "id": "test-greet", "kind": "file", "base": "repo", "path": "test/greet.test.mjs", "note": "exact-output test exists" },
+    { "id": "docs-usage", "kind": "file", "base": "repo", "path": "docs/usage.md", "planned": true, "derivedFrom": ["task-2-1"], "note": "new documentation file, not created yet" }
+  ],
+  "quantities": {
+    "tasks": { "state": "known", "kind": "measured", "min": 3, "max": 3, "rationale": "three checklist items in tasks.md", "evidence": ["tasks"] },
+    "files": { "state": "known", "kind": "estimated", "min": 3, "max": 4, "rationale": "greet.mjs, its test and the planned docs/usage.md; README may also be touched", "evidence": ["task-1-1", "task-1-2", "docs-usage"] },
+    "diffLines": { "state": "known", "kind": "estimated", "min": 20, "max": 60, "rationale": "one option with a branch, two tests and a short doc section", "evidence": ["task-1-1", "task-1-2", "task-2-1"] },
+    "generatedFiles": { "state": "not-applicable", "rationale": "no code generation in this project" }
+  },
+  "factors": {
+    "domains": { "state": "known", "level": 0, "kind": "declared", "rationale": "rubric 0: one domain (greeting), links to other domains unchanged", "evidence": ["proposal"], "details": { "domainIds": ["greeting"], "links": 0 } },
+    "layers": { "state": "known", "level": 1, "kind": "declared", "rationale": "rubric 1: domain code with local touch of tests and docs, no boundary crossing", "evidence": ["task-1-1", "task-1-2", "task-2-1"], "details": { "layerCategories": ["domain", "tests", "docs"], "boundaryCrossings": 0 } },
+    "architecture": { "state": "known", "level": 0, "kind": "declared", "rationale": "rubric 0: no new component, contract or dependency; design keeps one function", "evidence": ["design"] },
+    "logic": { "state": "known", "level": 1, "kind": "declared", "rationale": "rubric 1: one simple branch and a string transformation", "evidence": ["design", "src-greet"] },
+    "compatibility": { "state": "known", "level": 1, "kind": "declared", "rationale": "rubric 1: additive option on an exported function; default output unchanged", "evidence": ["req-shout", "design"] },
+    "testability": { "state": "known", "level": 0, "kind": "declared", "rationale": "rubric 0: exact string oracle, fast local unit test", "evidence": ["req-shout", "test-greet"] },
+    "consequences": { "state": "known", "level": 1, "kind": "declared", "rationale": "rubric 1: local defect in greeting text, trivially reverted", "evidence": ["proposal"] },
+    "uncertainty": { "state": "known", "level": 0, "kind": "declared", "rationale": "rubric 0: decisions closed in design, scenarios fully specify the output", "evidence": ["design", "req-shout"] }
+  }
+}

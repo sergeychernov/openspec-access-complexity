@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openspec-assess.local/schemas/latest-1.schema.json",
+  "title": "Pointer to the latest completed assessment run v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "assessmentId",
+    "stage",
+    "manifestDigest",
+    "history"
+  ],
+  "properties": {
+    "kind": {
+      "const": "openspec-assess.latest"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "assessmentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "stage": {
+      "enum": [
+        "planning",
+        "verification"
+      ]
+    },
+    "manifestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "assessmentId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "stage": {
+            "enum": [
+              "planning",
+              "verification"
+            ]
+          }
+        },
+        "required": [
+          "assessmentId",
+          "stage"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

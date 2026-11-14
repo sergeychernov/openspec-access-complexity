@@ -1,0 +1,66 @@
+{
+  "asOf": null,
+  "assessmentId": "9e17f613d161649cb2053fa523bee0c9f04a5348504d53af25104885106fc604",
+  "change": {
+    "name": "add-complexity-assessment-skill"
+  },
+  "inputs": {
+    "benchmarks.snapshot.json": "sha256:e31c54844b82a633559ce9b78e36aded0ffe0ac91e865b000b42c4e6f711df39",
+    "config.snapshot.json": "sha256:b4cb3113274a7f30757a021ac6dd279678c51b867ff31a7b4bc748ccf27f79a5",
+    "profile.json": "sha256:54fd0e1d231fd06dfc1c42d0f73c961bbe4fdac5fc1653bf6b7b01a009659a52"
+  },
+  "kind": "openspec-assess.manifest",
+  "outputs": {
+    "report.json": "sha256:9f83392ec65dfeafc5d1aa72a318a1328e3c51dba04d181b27023b272e99e04d",
+    "report.md": "sha256:8c9adabf4551bf979b8dd0d0eaac2003ecc4ef430db07f8f10e43a68330943c8"
+  },
+  "schemaVersion": 1,
+  "sources": {
+    "artifacts": {
+      "design.md": "sha256:fde6fc12bdaa09027e35a7ef621787c8aba22cf6721032b0cff973b66ae9cb64",
+      "proposal.md": "sha256:ef9efca676dd9a4f925dd9b653cbcec7a444413d505b48a68ae5dbba1fb1bcb3",
+      "specs/assessment-configuration/spec.md": "sha256:fba7441631695ee36f3cac8c2522a386b0cffb3cf677dd1ea909023ffc4d9e12",
+      "specs/change-assessment-profile/spec.md": "sha256:9379272df24d24d05a05abbfdc582099de2bb37a1f43afff8216ecb62ec0ceb0",
+      "specs/model-suitability-ranking/spec.md": "sha256:83b61858c50f9c18d02b903b13ce57ba9bd4c4336447a5a2c2468c6c5b5a7fc0",
+      "specs/openspec-assessment-lifecycle/spec.md": "sha256:7b6eb4c85967a3912d53bf292566b2fbb1253908d270cc836dcff00d53cdda68",
+      "tasks.md": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93"
+    },
+    "config": {
+      "defaults": "sha256:78f22c00ae689047b3878817159f020bd33159ef2328894a4877cfa3585e7c90",
+      "effective": "sha256:3a600b3d151535fac98c702574f0b7dd463451dd70f44d84d925f0df3aa61404",
+      "overrides": null
+    },
+    "evidence": {
+      "cli-src": "sha256:22937976ce418329193047a1cde9c67433f2079ac44cd0258ca1c98020f4023e",
+      "configurator-src": "sha256:492b333f75ad154499a837d8a105712292f3baba5c749d15a1a6555c8798a849",
+      "design": "sha256:fde6fc12bdaa09027e35a7ef621787c8aba22cf6721032b0cff973b66ae9cb64",
+      "evaluate-src": "sha256:e038469cd2ba89e81ed107d4eda978d7e9eb091f98f32563520c6e185fa0ea6a",
+      "proposal": "sha256:ef9efca676dd9a4f925dd9b653cbcec7a444413d505b48a68ae5dbba1fb1bcb3",
+      "ranking-src": "sha256:1a820471cd1c2f78fe059fd9127766e7cc56fcc24992ae4d8cf4dd626d98145c",
+      "req-config": "sha256:fba7441631695ee36f3cac8c2522a386b0cffb3cf677dd1ea909023ffc4d9e12",
+      "req-lifecycle": "sha256:7b6eb4c85967a3912d53bf292566b2fbb1253908d270cc836dcff00d53cdda68",
+      "req-profile": "sha256:9379272df24d24d05a05abbfdc582099de2bb37a1f43afff8216ecb62ec0ceb0",
+      "req-ranking": "sha256:83b61858c50f9c18d02b903b13ce57ba9bd4c4336447a5a2c2468c6c5b5a7fc0",
+      "task-1-4": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "task-11-6": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "task-7-2": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "tasks": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93"
+    },
+    "scope": "sha256:5df2d53a28c658bc5849d0821c35a8eb3c36c11e9cd7bea695736e209c5f5e9c"
+  },
+  "stage": "planning",
+  "version": {
+    "evaluator": 3,
+    "normalization": 1,
+    "package": "0.3.0",
+    "renderer": 3,
+    "schemas": {
+      "benchmarks": 1,
+      "config": 3,
+      "manifest": 1,
+      "profile": 1,
+      "report": 3
+    }
+  },
+  "versionDigest": "sha256:66a02f5a7e8d15b76bf54a92b27bdea4d86df082e5992f9cfae5a5c67b9e3425"
+}

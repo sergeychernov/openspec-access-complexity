@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assessment Configurator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <h1>Assessment configurator</h1>
+      <p class="muted">Edit the parameter × model matrix and resource settings. Preview uses the same evaluator as the CLI. Nothing is written to disk until you export.</p>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </header>
+
+  <section class="panel" aria-labelledby="inputs-h">
+    <h2 id="inputs-h">Inputs</h2>
+    <div class="inputs">
+      <label class="file">Profile (assessment/profile.json)<input type="file" id="in-profile" accept="application/json,.json"></label>
+      <label class="file">Overrides to start from<input type="file" id="in-overrides" accept="application/json,.json"></label>
+      <label>As-of (UTC, optional)<input type="text" id="in-asof" placeholder="2026-11-14T12:00:00Z" spellcheck="false"></label>
+      <button type="button" id="btn-example">Load example profile + overrides</button>
+    </div>
+    <p class="muted small" id="inputs-info"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="matrix-h">
+    <div class="row-between">
+      <h2 id="matrix-h">Parameter × model</h2>
+      <div class="seg" role="tablist" aria-label="Phase">
+        <button type="button" role="tab" data-phase="apply" aria-selected="true">Apply</button>
+        <button type="button" role="tab" data-phase="verify" aria-selected="false">Verify</button>
+      </div>
+    </div>
+    <p class="muted small">Ячейки — «Оценка модели · 0–100» для выбранного в заголовке effort (просмотр не меняет расчёт). Если данных нет, очистите поле: запись станет «Нет данных» (u), прежнее значение сохранится в подробностях. Уровень сложности параметра (0–4) берётся из профиля change и здесь не редактируется.</p>
+    <div class="legend" aria-label="Легенда происхождения оценок">
+      <span class="legend-title">Происхождение:</span>
+      <span><span class="prov prov-p" aria-hidden="true">p</span> proxy — оценка через косвенные данные с явным mapping</span>
+      <span><span class="prov prov-h" aria-hidden="true">h</span> heuristic — эвристическая оценка</span>
+      <span><span class="prov prov-o" aria-hidden="true">o</span> user-override — пользовательское значение</span>
+      <span><span class="prov prov-u" aria-hidden="true">u</span> unknown — нет данных</span>
+      <span><span class="prov prov-m" aria-hidden="true">m</span> measured — сопоставимое измерение</span>
+    </div>
+    <div class="scroll"><table class="matrix" id="matrix"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="levels-h" id="levels-panel" hidden>
+    <div class="row-between">
+      <h2 id="levels-h">Все уровни</h2>
+      <button type="button" id="btn-levels-close">Закрыть</button>
+    </div>
+    <p class="muted small" id="levels-info"></p>
+    <div class="scroll"><table class="matrix" id="levels"></table></div>
+  </section>
+
+  <dialog id="prov-dialog" aria-labelledby="prov-title">
+    <h2 id="prov-title">Происхождение оценки</h2>
+    <div id="prov-body"></div>
+    <div class="actions"><button type="button" id="prov-reset">Вернуть значение по умолчанию</button><button type="button" id="prov-close" autofocus>Закрыть</button></div>
+  </dialog>
+
+  <section class="panel" aria-labelledby="res-h">
+    <h2 id="res-h">Ресурсы и политика выбора</h2>
+    <p class="muted small">Важность параметров (матрица выше) влияет на пригодность; параметры штрафа времени влияют только на сравнение расхода S среди вариантов, прошедших порог качества.</p>
+    <div class="grid2">
+      <div>
+        <h3>API</h3>
+        <div id="api-settings"></div>
+        <div class="scroll"><table id="pricing"></table></div>
+      </div>
+      <div>
+        <h3>Subscription</h3>
+        <div id="sub-settings"></div>
+        <div class="scroll"><table id="pools"></table></div>
+      </div>
+    </div>
+    <h3>Constraints and quality floors</h3>
+    <div id="constraints"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="adv-h">
+    <h2 id="adv-h">Advanced: overrides JSON</h2>
+    <p class="muted small">Every configuration field can be set here as overrides (merged by IDs onto the shipped defaults). Apply to validate; schema errors are listed with their field paths.</p>
+    <textarea id="adv" rows="10" spellcheck="false" aria-label="Overrides JSON"></textarea>
+    <div class="actions">
+      <button type="button" id="btn-adv-apply">Apply overrides JSON</button>
+      <button type="button" id="btn-adv-refresh">Refresh from current edits</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="errors-h" id="errors-panel" hidden>
+    <h2 id="errors-h">Validation errors</h2>
+    <ul id="errors" class="errors"></ul>
+  </section>
+
+  <section class="panel" aria-labelledby="preview-h">
+    <div class="row-between">
+      <h2 id="preview-h">Preview</h2>
+      <div class="actions">
+        <button type="button" id="btn-baseline">Use current result as baseline</button>
+        <button type="button" id="btn-reset-all">Reset all to defaults</button>
+        <button type="button" id="btn-export" class="primary">Export overrides.json</button>
+      </div>
+    </div>
+    <p class="muted small" id="preview-info"></p>
+    <div id="preview" class="rankings"></div>
+  </section>
+
+  <footer class="muted small">Heuristic fit scores, not probabilities. The configurator runs offline from local package files: no login, CDN, fonts, analytics or model calls.</footer>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

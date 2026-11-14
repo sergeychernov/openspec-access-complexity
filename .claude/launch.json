@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "assess-configurator",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["packages/openspec-assess-change/bin/openspec-assess.mjs", "configure", "--port", "4317"],
+      "port": 4317
+    }
+  ]
+}

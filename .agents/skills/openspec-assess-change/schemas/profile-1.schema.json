@@ -1,0 +1,341 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openspec-assess.local/schemas/profile-1.schema.json",
+  "title": "Change assessment profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "change",
+    "stage",
+    "scope",
+    "evidence",
+    "quantities",
+    "factors"
+  ],
+  "properties": {
+    "kind": {
+      "const": "openspec-assess.profile"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "change": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "stage": {
+      "enum": [
+        "planning",
+        "verification"
+      ]
+    },
+    "previousAssessmentId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "all-tasks",
+            "tasks"
+          ]
+        },
+        "taskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+(\\.[0-9]+)*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "quantities": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "tasks",
+          "files",
+          "diffLines",
+          "generatedFiles"
+        ]
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/quantity"
+      },
+      "required": [
+        "tasks",
+        "files",
+        "diffLines",
+        "generatedFiles"
+      ]
+    },
+    "factors": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "domains",
+          "layers",
+          "architecture",
+          "logic",
+          "compatibility",
+          "testability",
+          "consequences",
+          "uncertainty"
+        ]
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/factor"
+      },
+      "required": [
+        "domains",
+        "layers",
+        "architecture",
+        "logic",
+        "compatibility",
+        "testability",
+        "consequences",
+        "uncertainty"
+      ]
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "note"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "kind": {
+          "enum": [
+            "artifact",
+            "requirement",
+            "task",
+            "file",
+            "diff",
+            "check-result"
+          ]
+        },
+        "base": {
+          "enum": [
+            "change",
+            "repo"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(^|/)\\.\\.(/|$))[^\\\\\\u0000]+$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "planned": {
+          "type": "boolean"
+        },
+        "derivedFrom": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "known",
+            "unknown",
+            "not-applicable"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "measured",
+            "declared",
+            "estimated"
+          ]
+        },
+        "min": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "factor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "known",
+            "unknown",
+            "not-applicable"
+          ]
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "kind": {
+          "enum": [
+            "measured",
+            "declared",
+            "estimated"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "details": {
+          "$ref": "#/$defs/factorDetails"
+        }
+      }
+    },
+    "factorDetails": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domainIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "links": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layerCategories": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "ui",
+              "api",
+              "domain",
+              "data",
+              "infrastructure",
+              "build",
+              "config",
+              "docs",
+              "tests",
+              "security",
+              "tooling"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "boundaryCrossings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

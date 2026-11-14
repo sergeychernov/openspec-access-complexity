@@ -1,0 +1,282 @@
+{
+  "change": {
+    "name": "add-complexity-assessment-skill"
+  },
+  "evidence": [
+    {
+      "base": "change",
+      "digest": "sha256:ef9efca676dd9a4f925dd9b653cbcec7a444413d505b48a68ae5dbba1fb1bcb3",
+      "id": "proposal",
+      "kind": "artifact",
+      "note": "why and what changes",
+      "path": "proposal.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:fde6fc12bdaa09027e35a7ef621787c8aba22cf6721032b0cff973b66ae9cb64",
+      "id": "design",
+      "kind": "artifact",
+      "note": "decisions, risks, migration",
+      "path": "design.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "id": "tasks",
+      "kind": "artifact",
+      "note": "task list (scope)",
+      "path": "tasks.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:9379272df24d24d05a05abbfdc582099de2bb37a1f43afff8216ecb62ec0ceb0",
+      "id": "req-profile",
+      "kind": "requirement",
+      "locator": "Структурированный профиль change",
+      "note": "profile contract",
+      "path": "specs/change-assessment-profile/spec.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:83b61858c50f9c18d02b903b13ce57ba9bd4c4336447a5a2c2468c6c5b5a7fc0",
+      "id": "req-ranking",
+      "kind": "requirement",
+      "locator": "Минимальный расход при достаточном качестве",
+      "note": "cheapest sufficient policy",
+      "path": "specs/model-suitability-ranking/spec.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:7b6eb4c85967a3912d53bf292566b2fbb1253908d270cc836dcff00d53cdda68",
+      "id": "req-lifecycle",
+      "kind": "requirement",
+      "locator": "Сохранение при archive",
+      "note": "storage in change and archive",
+      "path": "specs/openspec-assessment-lifecycle/spec.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:fba7441631695ee36f3cac8c2522a386b0cffb3cf677dd1ea909023ffc4d9e12",
+      "id": "req-config",
+      "kind": "requirement",
+      "locator": "Валидация конфигурации",
+      "note": "config validation",
+      "path": "specs/assessment-configuration/spec.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "id": "task-1-4",
+      "kind": "task",
+      "locator": "1.4",
+      "note": "canonical serialization and version identity",
+      "path": "tasks.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "id": "task-7-2",
+      "kind": "task",
+      "locator": "7.2",
+      "note": "configurator shares pure evaluator",
+      "path": "tasks.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:9417d2a6db84032cc35bd5b4070dbf97dc840694b6e20115ca0f577011650e93",
+      "id": "task-11-6",
+      "kind": "task",
+      "locator": "11.6",
+      "note": "numeric input validation in UI",
+      "path": "tasks.md"
+    },
+    {
+      "base": "repo",
+      "digest": "sha256:1a820471cd1c2f78fe059fd9127766e7cc56fcc24992ae4d8cf4dd626d98145c",
+      "id": "ranking-src",
+      "kind": "file",
+      "note": "ranking implementation",
+      "path": "packages/openspec-assess-change/src/core/ranking.mjs"
+    },
+    {
+      "base": "repo",
+      "digest": "sha256:e038469cd2ba89e81ed107d4eda978d7e9eb091f98f32563520c6e185fa0ea6a",
+      "id": "evaluate-src",
+      "kind": "file",
+      "note": "pure evaluator",
+      "path": "packages/openspec-assess-change/src/core/evaluate.mjs"
+    },
+    {
+      "base": "repo",
+      "digest": "sha256:22937976ce418329193047a1cde9c67433f2079ac44cd0258ca1c98020f4023e",
+      "id": "cli-src",
+      "kind": "file",
+      "note": "CLI entrypoint",
+      "path": "packages/openspec-assess-change/src/node/cli.mjs"
+    },
+    {
+      "base": "repo",
+      "digest": "sha256:492b333f75ad154499a837d8a105712292f3baba5c749d15a1a6555c8798a849",
+      "id": "configurator-src",
+      "kind": "file",
+      "note": "local configurator UI",
+      "path": "packages/openspec-assess-change/configurator/app.mjs"
+    }
+  ],
+  "factors": {
+    "architecture": {
+      "evidence": [
+        "design",
+        "proposal"
+      ],
+      "kind": "declared",
+      "level": 4,
+      "rationale": "Anchor 4: new subsystem (standalone package, versioned JSON contracts, CLI, configurator, skill packaging).",
+      "state": "known"
+    },
+    "compatibility": {
+      "evidence": [
+        "req-config",
+        "design"
+      ],
+      "kind": "declared",
+      "level": 3,
+      "rationale": "Anchor 3: breaking format changes with migration of schemaVersion 1/2 to 3 and explicit policy switch.",
+      "state": "known"
+    },
+    "consequences": {
+      "evidence": [
+        "proposal",
+        "req-lifecycle"
+      ],
+      "kind": "declared",
+      "level": 2,
+      "rationale": "Anchor 2: wrong recommendation affects owner's choice of model spend; the tool is advisory, writes only to the change's assessment directory.",
+      "state": "known"
+    },
+    "domains": {
+      "details": {
+        "domainIds": [
+          "ranking",
+          "profile",
+          "config",
+          "lifecycle",
+          "configurator"
+        ]
+      },
+      "evidence": [
+        "proposal",
+        "design",
+        "req-profile"
+      ],
+      "kind": "declared",
+      "level": 3,
+      "rationale": "Anchor 3: three+ domains (ranking, profile/evidence, config/catalog, storage/lifecycle, configurator); changes boundaries of OpenSpec change storage.",
+      "state": "known"
+    },
+    "layers": {
+      "details": {
+        "layerCategories": [
+          "ui",
+          "api",
+          "domain",
+          "data",
+          "infrastructure",
+          "build",
+          "config",
+          "docs",
+          "tests",
+          "tooling"
+        ]
+      },
+      "evidence": [
+        "design",
+        "tasks"
+      ],
+      "kind": "declared",
+      "level": 4,
+      "rationale": "Anchor 4: crosses most layer categories (ui, api, domain, data, infrastructure, build, config, docs, tests, tooling) with contract coordination.",
+      "state": "known"
+    },
+    "logic": {
+      "evidence": [
+        "req-ranking",
+        "ranking-src",
+        "evaluate-src"
+      ],
+      "kind": "declared",
+      "level": 3,
+      "rationale": "Anchor 3: integer arithmetic, quality floor, linear penalty, stable ordering, unknown handling in ranking.",
+      "state": "known"
+    },
+    "testability": {
+      "evidence": [
+        "task-7-2",
+        "task-11-6"
+      ],
+      "kind": "declared",
+      "level": 3,
+      "rationale": "Anchor 3: ranking is deterministic (good oracle), but configurator UI and client integration need partly manual checks.",
+      "state": "known"
+    },
+    "uncertainty": {
+      "evidence": [
+        "design",
+        "task-1-4"
+      ],
+      "kind": "declared",
+      "level": 2,
+      "rationale": "Anchor 2: most decisions closed in design; benchmark calibration and catalog values remain manual with limited impact.",
+      "state": "known"
+    }
+  },
+  "kind": "openspec-assess.profile",
+  "quantities": {
+    "diffLines": {
+      "evidence": [
+        "design"
+      ],
+      "kind": "estimated",
+      "max": 60000,
+      "min": 30000,
+      "rationale": "Estimate from package text volume (~108k lines incl. fixtures, golden files, schemas, docs); pre-verify measurement will replace this.",
+      "state": "known"
+    },
+    "files": {
+      "evidence": [
+        "proposal",
+        "design"
+      ],
+      "kind": "estimated",
+      "max": 130,
+      "min": 100,
+      "rationale": "Estimate from package layout (~125 non-dependency files incl. fixtures, tests, configurator, references).",
+      "state": "known"
+    },
+    "generatedFiles": {
+      "evidence": [
+        "design"
+      ],
+      "kind": "estimated",
+      "max": 10,
+      "min": 5,
+      "rationale": "Generated schemas, defaults build output, packed fixtures (.tgz) and golden outputs.",
+      "state": "known"
+    },
+    "tasks": {
+      "evidence": [
+        "tasks"
+      ],
+      "kind": "declared",
+      "max": 60,
+      "min": 60,
+      "rationale": "Count of checklist items in tasks.md (60 items, all marked done).",
+      "state": "known"
+    }
+  },
+  "schemaVersion": 1,
+  "scope": {
+    "mode": "all-tasks"
+  },
+  "stage": "planning"
+}

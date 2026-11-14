@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openspec-assess.local/schemas/overrides-3.schema.json",
+  "title": "User overrides v3 (partial config merged onto defaults by stable IDs)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "set"
+  ],
+  "properties": {
+    "kind": {
+      "const": "openspec-assess.overrides"
+    },
+    "schemaVersion": {
+      "const": 3
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "set": {
+      "type": "object"
+    }
+  }
+}
