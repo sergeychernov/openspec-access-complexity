@@ -8,14 +8,20 @@ import {
 
 export const PHASES = ['apply', 'verify'];
 export const RESOURCE_KINDS = {
-  usage: { path: ['api', 'usage'], label: 'API: множитель токенов', unit: '× нагрузки категории (токены)' },
-  load: { path: ['subscription', 'load'], label: 'Подписка: множитель нагрузки', unit: '× относительной нагрузки' },
-  minutes: { path: ['time', 'minutes'], label: 'Время: множитель', unit: '× минут категории' },
+  usage: { path: ['api', 'usage'], label: 'API: множитель токенов', unit: 'доля от токенов категории нагрузки, 1 = как в категории' },
+  load: { path: ['subscription', 'load'], label: 'Подписка: множитель нагрузки', unit: 'доля от относительной нагрузки категории, 1 = как в категории' },
+  minutes: { path: ['time', 'minutes'], label: 'Время: множитель', unit: 'доля от минут категории, 1 = как в категории' },
 };
 
-export const WEIGHT_LABEL = { apply: 'Важность параметра для реализации', verify: 'Важность параметра для проверки' };
-export const WEIGHT_HELP = 'Относительный вес параметра при сравнении моделей. При одинаковой сложности вес 2 даёт вдвое больший вклад, чем вес 1. Ноль исключает параметр из взвешенной оценки, но не отменяет обязательные ограничения.';
-export const WEIGHT_RELEVANCE_HELP = 'Вклад параметра = важность × max(1, уровень сложности из профиля 0–4). Важность задаёте вы; уровень сложности берётся из профиля change; оценка модели (0–100) — отдельное третье число.';
+// Column header is the short "Вес" in both phases; field names and the tooltip keep the full phase meaning.
+export const WEIGHT_HEADER = 'Вес';
+export const WEIGHT_LABEL = { apply: 'Вес параметра для реализации', verify: 'Вес параметра для проверки' };
+export const WEIGHT_HELP = 'При одинаковой сложности параметр с весом 2 вносит вдвое больший вклад, чем с весом 1. Вес 0 исключает параметр из взвешенной оценки, но не отменяет обязательные ограничения.';
+export const WEIGHT_RELEVANCE_HELP = 'Вклад параметра = вес × max(1, уровень сложности из профиля 0–4). Вес задаёте вы; уровень сложности берётся из профиля change; оценка модели (0–100) — отдельное третье число.';
+export function weightHelp(phase) {
+  return `${WEIGHT_LABEL[phase]}. ${WEIGHT_HELP} ${WEIGHT_RELEVANCE_HELP}`;
+}
+export const LAST_EFFORT_MESSAGE = 'Выберите хотя бы один effort';
 export const SCORE_HELP = 'Пригодность выбранной модели для этой фазы, параметра и effort по шкале 0–100. Это эвристическая оценка соответствия, а не вероятность успеха. Хранится как целое 0–10000 bp. Очистите поле, если данных нет: запись станет «Нет данных» (u), прежнее значение сохранится в подробностях.';
 export const CLEAR_HELP = 'Очистите поле, если данных нет: запись станет «Нет данных» (u), прежнее значение и основание сохранятся в подробностях. 0 — это число, а не отсутствие данных.';
 export const POLICY_HELP = 'Сначала отсекаются варианты ниже порога качества и с нарушенными критическими параметрами. Среди оставшихся выбирается наименьший S = C × (1 + k × max(0, T − g) / s): C — верхний прогноз стоимости API или нагрузки подписки, T — типичное время в минутах. Избыточное качество учитывается только при равенстве S и C. S — критерий сравнения, а не цена: бюджет и квота проверяются по исходному прогнозу. При g = 30, s = 30, k = 5 %: 45 мин → ×1.025, 60 мин → ×1.05, 90 мин → ×1.10; k = 0 отключает учёт времени.';
@@ -107,7 +113,7 @@ export function allLevels(config, modelId, phase) {
         kind, label: k.label, unit: k.unit, storedUnit: t.unit,
         cells: m.supportedEfforts.map((e) => {
           const r = t[phase][e];
-          return { effort: e, value: r.value, display: r.value === null ? 'Нет данных' : `×${formatMultiplier(r.value)}`, status: r.status, letter: PROVENANCE_LETTERS[r.status].letter, basis: r.basis, hasOrigin: Boolean(r.origin) };
+          return { effort: e, value: r.value, display: r.value === null ? 'Нет данных' : formatMultiplier(r.value), status: r.status, letter: PROVENANCE_LETTERS[r.status].letter, basis: r.basis, hasOrigin: Boolean(r.origin) };
         }),
       };
     }),
@@ -121,13 +127,27 @@ export function formatMultiplier(bp) {
 }
 
 // "1.5" → 15000; up to four decimals, exact.
+// Resource multipliers are plain numbers (no "×"): digits and one decimal separator, "." or ",".
+// Exact conversion to bp (1.2 → 12000); range 0–100 inclusive; up to four decimals; no rounding.
 export function parseMultiplier(text) {
-  const t = String(text).trim().replace(/^×/, '');
-  const m = /^(0|[1-9][0-9]{0,2})(?:\.([0-9]{1,4}))?$/.exec(t);
-  if (!m) return { ok: false, error: `"${text}" is not a multiplier like 1.5 (up to four decimals)` };
+  const t = String(text).trim();
+  const m = /^(0|[1-9][0-9]{0,2})(?:[.,]([0-9]+))?$/.exec(t);
+  if (!m) return { ok: false, error: `«${t}» — не число вида 1.5 или 0,78` };
+  if (m[2] && m[2].length > 4) return { ok: false, error: `«${t}»: больше четырёх знаков после разделителя; значение не округляется` };
   const bp = Number(m[1]) * 10000 + (m[2] ? Number(m[2].padEnd(4, '0')) : 0);
-  if (bp > 1000000) return { ok: false, error: `"${text}" is above ×100` };
+  if (bp > 1000000) return { ok: false, error: `«${t}»: множитель должен быть от 0 до 100` };
   return { ok: true, bp };
+}
+
+// Text that may appear in a multiplier field while typing: digits and at most one "." or ",".
+// Intermediate states such as "1." or "" are allowed; letters, "×", signs, exponents are not.
+export function isMultiplierDraft(text) {
+  return /^[0-9]*(?:[.,][0-9]*)?$/.test(String(text));
+}
+
+// The text a field would hold after inserting `data` over the selection [start, end).
+export function nextFieldText(value, start, end, data) {
+  return `${value.slice(0, start)}${data ?? ''}${value.slice(end)}`;
 }
 
 function originOf(prev) {
@@ -226,6 +246,27 @@ export function setPath(config, path, value) {
   const last = keys[keys.length - 1];
   if (Array.isArray(node)) node[Number(last)] = value; else node[last] = value;
   return next;
+}
+
+// Efforts allowed for recommendations (view-independent). At least one must stay selected; the full
+// supported set is stored as "no restriction" (field absent), exactly as before.
+export function allowedEfforts(model) {
+  return [...(model.efforts || model.supportedEfforts)];
+}
+
+export function allowedSummary(model) {
+  const allowed = new Set(allowedEfforts(model));
+  return model.supportedEfforts.filter((e) => allowed.has(e)).join(', ');
+}
+
+export function toggleAllowedEffort(config, modelId, effort, checked) {
+  const m = config.models.find((x) => x.id === modelId);
+  if (!m.supportedEfforts.includes(effort)) return { ok: false, error: `effort ${effort} is not supported by ${modelId}` };
+  const cur = new Set(allowedEfforts(m));
+  if (checked) cur.add(effort); else cur.delete(effort);
+  const list = m.supportedEfforts.filter((e) => cur.has(e));
+  if (list.length === 0) return { ok: false, error: LAST_EFFORT_MESSAGE };
+  return { ok: true, config: setModelField(config, modelId, 'efforts', list.length === m.supportedEfforts.length ? [] : list) };
 }
 
 export function setModelField(config, modelId, field, value) {

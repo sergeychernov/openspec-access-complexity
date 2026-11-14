@@ -4,6 +4,7 @@ import {
   setPath, setModelField, resetToDefaults, compareReports, parseIntOrNull, reportBytes, provenanceCard, defaultViewEffort,
   parseMultiplier, configDigestText, WEIGHT_LABEL, WEIGHT_HELP, WEIGHT_RELEVANCE_HELP, SCORE_HELP,
   CLEAR_HELP, POLICY_HELP, PENALTY_FIELDS, setResourceFromText, parseRequiredInt, parsePercentBp, setTimePenalty, economicsView,
+  WEIGHT_HEADER, weightHelp, allowedSummary, allowedEfforts, toggleAllowedEffort, isMultiplierDraft, nextFieldText, formatMultiplier,
 } from './model.mjs';
 import {
   parseJsonStrict, canonicalStringify, RANKING_KEYS, formatMicros, RUBRIC, formatScore, SCORE_LABEL, PROVENANCE_LETTERS,
@@ -30,6 +31,9 @@ const state = {
   view: {}, // model id → effort shown in its column (view only; never part of the config)
   levels: null, // model id whose "Все уровни" table is open
   card: null, // { kind: 'quality'|'resource', modelId, phase, effort, factor|resourceKind }
+  openMenu: null, // model id whose "allowed efforts" multiselect is open (view state)
+  menuFocus: null, // effort checkbox to refocus after a re-render
+  menuMessage: '',
 };
 let tipSeq = 0;
 
@@ -127,11 +131,197 @@ function scoreCell({ modelId, phase, effort, factor, cell, changed }) {
     el('span', { class: 'cellwrap' }, input, ...provCircle(cell, where, describe)), err);
 }
 
+// Floating layers live at <body> level with position: fixed, so neither the table's scroll area nor a
+// narrow column can clip or squeeze them; they are re-positioned on scroll/resize and kept on screen.
+function placeFloating(panel, anchor, preferredWidth = 300) {
+  const margin = 8;
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  const width = Math.max(160, Math.min(preferredWidth, vw - 2 * margin));
+  panel.style.width = `${width}px`;
+  const r = anchor.getBoundingClientRect();
+  const left = Math.min(Math.max(margin, r.left), vw - width - margin);
+  panel.style.left = `${left}px`;
+  panel.style.top = '0px';
+  const h = panel.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + h > vh - margin) top = Math.max(margin, r.top - h - 6);
+  panel.style.top = `${Math.min(top, Math.max(margin, vh - h - margin))}px`;
+}
+
+const tipLayer = { panel: null, anchor: null, pinned: false };
+
+function hideTip() {
+  if (tipLayer.panel) tipLayer.panel.hidden = true;
+  if (tipLayer.anchor) tipLayer.anchor.setAttribute('aria-expanded', 'false');
+  tipLayer.anchor = null;
+  tipLayer.pinned = false;
+}
+
+function showTip(anchor, text, pinned = false) {
+  if (!tipLayer.panel) {
+    tipLayer.panel = el('div', { class: 'float-panel float-tip', role: 'tooltip', id: 'float-tip' });
+    document.body.append(tipLayer.panel);
+  }
+  if (tipLayer.anchor && tipLayer.anchor !== anchor) tipLayer.anchor.setAttribute('aria-expanded', 'false');
+  tipLayer.panel.textContent = text;
+  tipLayer.panel.hidden = false;
+  tipLayer.anchor = anchor;
+  tipLayer.pinned = pinned;
+  anchor.setAttribute('aria-expanded', 'true');
+  placeFloating(tipLayer.panel, anchor, 300);
+}
+
+// "ⓘ" button: tooltip on hover and keyboard focus, pinned by click/Enter, closed by Escape.
 function infoButton(label, text) {
   const id = `tip-${tipSeq += 1}`;
-  return el('span', { class: 'cellwrap' },
-    el('button', { type: 'button', class: 'info', 'aria-label': `${label}: пояснение`, 'aria-describedby': id }, 'i'),
-    el('span', { role: 'tooltip', id, class: 'tip', text }));
+  const btn = el('button', { type: 'button', class: 'info', 'aria-label': `${label}: пояснение`, 'aria-describedby': id, 'aria-expanded': 'false' }, 'ⓘ');
+  btn.addEventListener('mouseenter', () => { if (!tipLayer.pinned) showTip(btn, text); });
+  btn.addEventListener('mouseleave', () => { if (!tipLayer.pinned && tipLayer.anchor === btn) hideTip(); });
+  btn.addEventListener('focus', () => showTip(btn, text, tipLayer.pinned && tipLayer.anchor === btn));
+  btn.addEventListener('blur', () => { if (tipLayer.anchor === btn) hideTip(); });
+  btn.addEventListener('click', () => {
+    if (tipLayer.anchor === btn && tipLayer.pinned) hideTip(); else showTip(btn, text, true);
+  });
+  return el('span', { class: 'cellwrap' }, btn, el('span', { id, class: 'sr-only', text }));
+}
+
+// Multiselect of efforts allowed for recommendations (one per model column).
+function effortsMultiselect(m) {
+  const summary = allowedSummary(m);
+  const open = state.openMenu === m.id;
+  const btn = el('button', {
+    type: 'button', class: 'ms-button', 'data-ms': m.id, 'aria-haspopup': 'true', 'aria-expanded': open ? 'true' : 'false', 'aria-controls': 'ms-menu',
+    'aria-label': `${m.displayName}: разрешены для рекомендаций — ${summary}`, title: summary,
+  }, el('span', { class: 'ms-text', text: summary }), el('span', { class: 'ms-caret', 'aria-hidden': 'true', text: '▾' }));
+  btn.addEventListener('click', () => {
+    if (state.openMenu === m.id) closeMenu(true); else openMenu(m.id);
+  });
+  btn.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.openMenu === m.id) { e.preventDefault(); closeMenu(true); }
+    if (e.key === 'ArrowDown' && state.openMenu !== m.id) { e.preventDefault(); openMenu(m.id); }
+  });
+  btn.addEventListener('focus', () => { btn.title = allowedSummary(state.edited.models.find((x) => x.id === m.id)); });
+  return el('div', { class: 'ms' }, el('div', { class: 'muted small', text: 'Разрешены для рекомендаций' }), btn);
+}
+
+function openMenu(modelId) {
+  state.openMenu = modelId;
+  state.menuMessage = '';
+  const m = state.edited.models.find((x) => x.id === modelId);
+  state.menuFocus = allowedEfforts(m)[0];
+  renderMenu();
+}
+
+function closeMenu(focusButton) {
+  const id = state.openMenu;
+  state.openMenu = null;
+  state.menuMessage = '';
+  renderMenu();
+  if (focusButton && id) {
+    const btn = document.querySelector(`button.ms-button[data-ms="${id}"]`);
+    if (btn) btn.focus();
+  }
+}
+
+function renderMenu() {
+  let panel = $('ms-menu');
+  document.querySelectorAll('button.ms-button').forEach((b) => b.setAttribute('aria-expanded', String(b.dataset.ms === state.openMenu)));
+  if (!state.openMenu) { if (panel) panel.hidden = true; return; }
+  if (!panel) {
+    panel = el('div', { id: 'ms-menu', class: 'float-panel ms-menu', role: 'group' });
+    panel.addEventListener('keydown', (e) => {
+      const boxes = [...panel.querySelectorAll('input[type="checkbox"]')];
+      const i = boxes.indexOf(document.activeElement);
+      if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); } else if (e.key === 'ArrowDown' && boxes.length) { e.preventDefault(); boxes[(i + 1) % boxes.length].focus(); } else if (e.key === 'ArrowUp' && boxes.length) { e.preventDefault(); boxes[(i - 1 + boxes.length) % boxes.length].focus(); }
+    });
+    document.body.append(panel);
+  }
+  const m = state.edited.models.find((x) => x.id === state.openMenu);
+  const allowed = new Set(allowedEfforts(m));
+  panel.setAttribute('aria-label', `${m.displayName}: efforts, разрешённые для рекомендаций`);
+  const alert = el('div', { class: 'err-inline ms-alert', role: 'alert', text: state.menuMessage });
+  panel.replaceChildren(
+    ...m.supportedEfforts.map((e) => {
+      const c = el('input', { type: 'checkbox', checked: allowed.has(e), 'data-effort': e, 'aria-label': `${m.displayName}: effort ${e} разрешён для рекомендаций` });
+      c.addEventListener('change', () => {
+        const r = toggleAllowedEffort(state.edited, m.id, e, c.checked);
+        state.menuFocus = e;
+        if (!r.ok) {
+          c.checked = true;
+          state.menuMessage = r.error;
+          alert.textContent = r.error;
+          setStatus(r.error, 'err');
+          return;
+        }
+        state.menuMessage = '';
+        update(r.config);
+      });
+      return el('label', { class: 'ms-option' }, c, ` ${e}`);
+    }),
+    alert,
+  );
+  panel.hidden = false;
+  const anchor = document.querySelector(`button.ms-button[data-ms="${m.id}"]`);
+  if (anchor) placeFloating(panel, anchor, 190);
+  const focusBox = panel.querySelector(`input[data-effort="${state.menuFocus}"]`) || panel.querySelector('input');
+  if (focusBox) focusBox.focus();
+}
+
+function repositionFloating() {
+  if (tipLayer.anchor && tipLayer.panel && !tipLayer.panel.hidden) {
+    if (document.body.contains(tipLayer.anchor)) placeFloating(tipLayer.panel, tipLayer.anchor, 300); else hideTip();
+  }
+  const panel = $('ms-menu');
+  if (state.openMenu && panel && !panel.hidden) {
+    const anchor = document.querySelector(`button.ms-button[data-ms="${state.openMenu}"]`);
+    if (anchor) placeFloating(panel, anchor, 190);
+  }
+}
+
+// Resource multiplier field: plain number, "." or "," as one decimal separator. Invalid characters
+// are blocked while typing; an invalid paste is rejected as a whole (no character is dropped).
+function multiplierInput({ value, label, onCommit }) {
+  const input = el('input', {
+    type: 'text', inputmode: 'decimal', autocomplete: 'off', value: value === null ? '' : formatMultiplier(value), placeholder: 'Нет данных',
+    'aria-label': label, 'aria-description': `${CLEAR_HELP} Число от 0 до 100, до четырёх знаков после точки или запятой.`, title: CLEAR_HELP, style: 'width:64px',
+  });
+  const err = el('span', { class: 'err-inline', role: 'alert' });
+  const reject = (msg) => { err.textContent = msg; };
+  input.addEventListener('beforeinput', (e) => {
+    if (!e.inputType || !e.inputType.startsWith('insert')) return;
+    const data = e.data ?? (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '');
+    if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') return; // handled by paste/drop below
+    const next = nextFieldText(input.value, input.selectionStart ?? input.value.length, input.selectionEnd ?? input.value.length, data);
+    if (!isMultiplierDraft(next)) { e.preventDefault(); reject(`«${data}» нельзя ввести: только цифры и один разделитель (точка или запятая)`); } else err.textContent = '';
+  });
+  let pendingCommit = false; // set when text was inserted programmatically (no native "change")
+  input.addEventListener('paste', (e) => {
+    const raw = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+    const data = raw.trim();
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    const next = nextFieldText(input.value, start, end, data);
+    if (!isMultiplierDraft(next)) { e.preventDefault(); reject(`Вставка «${raw}» отклонена целиком: только цифры и один разделитель`); return; }
+    err.textContent = '';
+    if (data === raw) return; // a valid paste is inserted by the browser as usual
+    e.preventDefault(); // surrounding whitespace is trimmed: insert the cleaned text ourselves
+    input.setRangeText(data, start, end, 'end');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    pendingCommit = true;
+  });
+  input.addEventListener('drop', (e) => {
+    const data = (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '').trim();
+    if (!isMultiplierDraft(nextFieldText(input.value, input.selectionStart ?? 0, input.selectionEnd ?? 0, data))) { e.preventDefault(); reject('Перетаскивание отклонено: только цифры и один разделитель'); }
+  });
+  const commit = () => {
+    pendingCommit = false;
+    const r = onCommit(input.value);
+    if (!r.ok) { reject(r.error); setStatus('Ввод отклонён: значение не изменено', 'err'); input.setAttribute('aria-invalid', 'true'); }
+  };
+  input.addEventListener('change', commit);
+  input.addEventListener('blur', () => { if (pendingCommit) commit(); });
+  return { input, err };
 }
 
 // ------------------------------------------------------------------ matrix
@@ -142,7 +332,7 @@ function renderMatrix() {
   const startRows = matrix(state.start, phase, state.view);
   const head = el('tr', {},
     el('th', { text: 'Параметр' }),
-    el('th', {}, WEIGHT_LABEL[phase], ' ', infoButton(WEIGHT_LABEL[phase], `${WEIGHT_HELP} ${WEIGHT_RELEVANCE_HELP}`)),
+    el('th', { class: 'weight-col', scope: 'col' }, WEIGHT_HEADER, ' ', infoButton(WEIGHT_LABEL[phase], weightHelp(phase))),
     ...cfg.models.map((m) => {
       const supported = m.supportedEfforts;
       const active = new Set(m.efforts || supported);
@@ -171,16 +361,7 @@ function renderMatrix() {
           sel.addEventListener('change', () => update(setModelField(state.edited, m.id, 'availability', sel.value)));
           return sel;
         })(),
-        el('div', { class: 'efforts muted small' }, 'Разрешены для рекомендаций:', el('br'), ...supported.map((e) => {
-          const c = el('input', { type: 'checkbox', checked: active.has(e), 'aria-label': `${m.id}: effort ${e} разрешён для рекомендаций` });
-          c.addEventListener('change', () => {
-            const cur = new Set(state.edited.models.find((x) => x.id === m.id).efforts || supported);
-            if (c.checked) cur.add(e); else cur.delete(e);
-            const list = supported.filter((x) => cur.has(x));
-            update(setModelField(state.edited, m.id, 'efforts', list.length === supported.length ? [] : list));
-          });
-          return el('label', {}, c, e);
-        })),
+        effortsMultiselect(m),
         el('button', { type: 'button', class: 'small', onclick: () => update(resetToDefaults(state.edited, state.defaults, { models: [m.id] })), text: 'reset модели' }));
     }));
   const body = rows.map((row, ri) => el('tr', {},
@@ -212,12 +393,14 @@ function renderLevels() {
     el('th', { scope: 'row', text: `${row.label} (${row.unit})` }),
     ...row.cells.map((c) => {
       const describe = `${m.displayName} · ${phase} · ${row.label} · effort ${c.effort}`;
-      const input = el('input', { type: 'text', value: c.value === null ? '' : c.display, placeholder: 'Нет данных', 'aria-label': `${row.label} (${row.unit}) — ${describe}`, 'aria-description': CLEAR_HELP, title: CLEAR_HELP, style: 'width:70px' });
-      const err = el('span', { class: 'err-inline', role: 'alert' });
-      input.addEventListener('change', () => {
-        const r = setResourceFromText(state.edited, m.id, row.kind, phase, c.effort, input.value);
-        if (!r.ok) { err.textContent = r.error; setStatus('Ввод отклонён: значение не изменено', 'err'); return; }
-        update(r.config);
+      const { input, err } = multiplierInput({
+        value: c.value,
+        label: `${row.label} (${row.unit}) — ${describe}`,
+        onCommit: (text) => {
+          const r = setResourceFromText(state.edited, m.id, row.kind, phase, c.effort, text);
+          if (r.ok) update(r.config);
+          return r;
+        },
       });
       const where = { kind: 'resource', modelId: m.id, phase, effort: c.effort, resourceKind: row.kind };
       return el('td', { class: c.value === null ? 'unknown' : null }, el('span', { class: 'cellwrap' }, input, ...provCircle(c, where, describe)), err);
@@ -250,7 +433,7 @@ function openCard(where) {
   const rec = recordAt(where);
   const card = provenanceCard(rec, state.benchmarks, where.kind === 'quality' ? { phase: where.phase, factor: where.factor } : {});
   const m = state.edited.models.find((x) => x.id === where.modelId);
-  const valueText = rec.value === null ? 'Нет данных' : (where.kind === 'quality' ? `${formatScore(rec.value)} (0–100; ${rec.value} bp)` : `×${rec.value / 10000} (${rec.value} bp)`);
+  const valueText = rec.value === null ? 'Нет данных' : (where.kind === 'quality' ? `${formatScore(rec.value)} (0–100; ${rec.value} bp)` : `множитель ${formatMultiplier(rec.value)} (${rec.value} bp)`);
   $('prov-title').textContent = `Происхождение: ${m.displayName} · ${where.phase} · effort ${where.effort} · ${where.kind === 'quality' ? where.factor : where.resourceKind}`;
   $('prov-body').replaceChildren(
     el('dl', {},
@@ -263,7 +446,7 @@ function openCard(where) {
       card.migratedFrom ? el('dd', { text: `${card.migratedFrom.rule}: ${card.migratedFrom.note}` }) : null),
     ...sourceList('Источники числа', card.sources),
     ...sourceList('Подтверждающие свидетельства', card.support, false),
-    ...(card.origin ? [el('h3', { text: 'Исходная запись (до изменения пользователем)' }), el('p', { text: `${card.origin.value === null ? 'Нет данных' : (where.kind === 'quality' ? formatScore(card.origin.value) : `×${card.origin.value / 10000}`)} — ${card.origin.status}: ${card.origin.basis}` }),
+    ...(card.origin ? [el('h3', { text: 'Исходная запись (до изменения пользователем)' }), el('p', { text: `${card.origin.value === null ? 'Нет данных' : (where.kind === 'quality' ? formatScore(card.origin.value) : `множитель ${formatMultiplier(card.origin.value)}`)} — ${card.origin.status}: ${card.origin.basis}` }),
       ...sourceList('Источники исходной записи', card.origin.sources), ...sourceList('Подтверждающие свидетельства исходной записи', card.origin.support, false)] : []),
   );
   const dlg = $('prov-dialog');
@@ -449,10 +632,12 @@ function renderPreview() {
 }
 
 function render() {
+  hideTip();
   renderMatrix();
   renderLevels();
   renderResources();
   renderPreview();
+  renderMenu();
   document.querySelectorAll('[data-phase]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.phase === state.phase)));
 }
 
@@ -490,6 +675,14 @@ function download(name, text) {
 }
 
 function wire() {
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && tipLayer.anchor) hideTip(); });
+  document.addEventListener('pointerdown', (e) => {
+    const t = e.target;
+    if (tipLayer.pinned && tipLayer.anchor && !tipLayer.anchor.contains(t) && !(tipLayer.panel && tipLayer.panel.contains(t))) hideTip();
+    if (state.openMenu && !t.closest('#ms-menu') && !(t.closest('button.ms-button') && t.closest('button.ms-button').dataset.ms === state.openMenu)) closeMenu(false);
+  }, true);
+  window.addEventListener('resize', repositionFloating);
+  document.addEventListener('scroll', repositionFloating, true);
   $('prov-close').addEventListener('click', () => $('prov-dialog').close());
   $('prov-reset').addEventListener('click', () => {
     const w = state.card;

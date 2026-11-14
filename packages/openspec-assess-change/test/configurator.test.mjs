@@ -7,6 +7,7 @@ import {
   effectiveFrom, exportOverrides, preview, matrix, setEstimate, setEstimateFromText, setResource, resetEstimate, setModelField, setPath, resetToDefaults,
   compareReports, reportBytes, allLevels, provenanceCard, configDigestText, WEIGHT_LABEL, WEIGHT_HELP,
   setResourceFromText, parseRequiredInt, parsePercentBp, setTimePenalty, economicsView, CLEAR_HELP,
+  WEIGHT_HEADER, weightHelp, allowedSummary, toggleAllowedEffort, LAST_EFFORT_MESSAGE, parseMultiplier, formatMultiplier, isMultiplierDraft, nextFieldText,
 } from '../configurator/model.mjs';
 import { startServer, resolveRequestPath } from '../src/node/server.mjs';
 import { canonicalStringify, FACTOR_IDS, formatScore, parseScore, mergeConfig } from '../src/core/index.mjs';
@@ -79,10 +80,10 @@ test('9.5 the 0–100 scale round-trips exactly and rejects bad input without ro
   const rec = unknown.models.find((m) => m.id === 'codex.sol').quality.apply.high.logic;
   assert.deepEqual([rec.value, rec.status], [null, 'unknown']);
   assert.equal(rec.origin.value, cfg.models.find((m) => m.id === 'codex.sol').quality.apply.high.logic.value, '"Нет данных" keeps the previous record separately');
-  assert.equal(WEIGHT_LABEL.apply, 'Важность параметра для реализации');
-  assert.equal(WEIGHT_LABEL.verify, 'Важность параметра для проверки');
-  assert.match(WEIGHT_HELP, /вес 2 даёт вдвое больший вклад, чем вес 1/);
-  assert.match(WEIGHT_HELP, /не отменяет обязательные ограничения/);
+  assert.equal(WEIGHT_LABEL.apply, 'Вес параметра для реализации');
+  assert.equal(WEIGHT_LABEL.verify, 'Вес параметра для проверки');
+  assert.match(WEIGHT_HELP, /параметр с весом 2 вносит вдвое больший вклад, чем с весом 1/);
+  assert.match(WEIGHT_HELP, /Вес 0 исключает параметр из взвешенной оценки, но не отменяет обязательные ограничения/);
 });
 
 test('9.5 display formatting never changes ranks: report bytes are identical whatever is displayed', () => {
@@ -118,7 +119,7 @@ test('9.6 "Все уровни" lists only supported efforts and edits exactly o
   assert.deepEqual(t.efforts, ['low', 'medium', 'high', 'xhigh']);
   assert.equal(t.quality.length, FACTOR_IDS.length);
   assert.deepEqual(t.resources.map((r) => r.kind), ['usage', 'load', 'minutes']);
-  assert.ok(t.resources.every((r) => r.cells.every((c) => c.display.startsWith('×'))), 'resources keep their own units, not 0–100');
+  assert.ok(t.resources.every((r) => r.cells.every((c) => /^[0-9]+(\.[0-9]{1,4})?$/.test(c.display))), 'resources show plain multipliers in their own units, not 0–100');
   const edited = setEstimate(cfg, 'antigravity.hydrogen', 'verify', 'xhigh', 'logic', 7000);
   const t2 = allLevels(edited, 'antigravity.hydrogen', 'verify');
   const changed = [];
@@ -266,7 +267,7 @@ test('10.4 clearing a nullable field means "no data": unknown with origin and le
   assert.deepEqual([rr.value, rr.status], [null, 'unknown']);
   assert.ok(rr.origin.value > 0);
   assert.equal(setResourceFromText(cfg, 'codex.astra', 'minutes', 'apply', 'high', '0').config.models.find((m) => m.id === 'codex.astra').resources.time.minutes.apply.high.value, 0);
-  assert.equal(setResourceFromText(cfg, 'codex.astra', 'minutes', 'apply', 'high', '1,5').ok, false);
+  assert.equal(setResourceFromText(cfg, 'codex.astra', 'minutes', 'apply', 'high', '1,5,1').ok, false);
   assert.match(CLEAR_HELP, /Очистите поле, если данных нет/);
 });
 
@@ -320,4 +321,76 @@ test('10.7 configurator assets have no ∅ button or "no data" menu', () => {
     const text = readFileSync(join(PKG, 'configurator', f), 'utf8');
     assert.doesNotMatch(text, /∅|class: 'nodata'|nodata/, f);
   }
+});
+
+// ------------------------------------------------------------------ section 11
+test('11.1/11.2 allowed efforts: summary in supported order, at least one effort, nothing else changes', () => {
+  const d = defaults();
+  const cfg = effectiveFrom(d, null);
+  const sol = (c) => c.models.find((m) => m.id === 'codex.sol');
+  assert.equal(allowedSummary(sol(cfg)), 'low, medium, high, xhigh, max', 'all supported efforts are listed, not "Все"');
+  let r = toggleAllowedEffort(cfg, 'codex.sol', 'xhigh', false);
+  assert.equal(allowedSummary(sol(r.config)), 'low, medium, high, max');
+  r = toggleAllowedEffort(r.config, 'codex.sol', 'xhigh', true);
+  assert.equal(sol(r.config).efforts, undefined, 'the full set is stored as "no restriction", as before');
+  let only = cfg;
+  for (const e of ['low', 'medium', 'xhigh', 'max']) only = toggleAllowedEffort(only, 'codex.sol', e, false).config;
+  assert.deepEqual(sol(only).efforts, ['high']);
+  const last = toggleAllowedEffort(only, 'codex.sol', 'high', false);
+  assert.deepEqual(last, { ok: false, error: LAST_EFFORT_MESSAGE });
+  assert.equal(LAST_EFFORT_MESSAGE, 'Выберите хотя бы один effort');
+  const strip = (c) => { const x = JSON.parse(JSON.stringify(c)); for (const m of x.models) delete m.efforts; return x; };
+  assert.deepEqual(strip(only), strip(cfg), 'quality/resource records and other models are untouched');
+  assert.equal(matrix(only, 'apply', { 'codex.sol': 'max' })[0].cells.find((c) => c.modelId === 'codex.sol').effort, 'max', 'view effort is independent of allowed efforts');
+  const reordered = toggleAllowedEffort(toggleAllowedEffort(cfg, 'codex.sol', 'low', false).config, 'codex.sol', 'low', true).config;
+  assert.equal(configDigestText(reordered), configDigestText(cfg), 'toggling back restores the same config');
+});
+
+test('11.3 weight column header is short; field names and help keep the phase meaning', () => {
+  assert.equal(WEIGHT_HEADER, 'Вес');
+  assert.match(weightHelp('apply'), /^Вес параметра для реализации\./);
+  assert.match(weightHelp('verify'), /^Вес параметра для проверки\./);
+  assert.match(weightHelp('apply'), /уровень сложности из профиля/);
+});
+
+test('11.5 multipliers: plain numbers, "." or ",", exact round trip, range 0–100, four decimals', () => {
+  for (const [text, bp, shown] of [['0', 0, '0'], ['0.6', 6000, '0.6'], ['0,78', 7800, '0.78'], ['0.78', 7800, '0.78'], ['1.2', 12000, '1.2'], ['100', 1000000, '100'], ['12,3456', 123456, '12.3456'], ['0.0001', 1, '0.0001']]) {
+    assert.deepEqual(parseMultiplier(text), { ok: true, bp }, text);
+    assert.equal(formatMultiplier(bp), shown);
+    assert.deepEqual(parseMultiplier(formatMultiplier(bp)), { ok: true, bp }, `round trip ${shown}`);
+  }
+  for (const bad of ['×1.2', '100.0001', '1.23456', '-1', '+1', '1e2', '1,2,3', '1.2.3', '1..2', '.5', '1.', 'abc', ' x ']) assert.equal(parseMultiplier(bad).ok, false, bad);
+  const d = defaults();
+  const cfg = effectiveFrom(d, null);
+  const t = allLevels(cfg, 'codex.sol', 'apply');
+  assert.ok(t.resources.every((row) => row.cells.every((c) => !c.display.includes('×'))), 'no × in editable values');
+  assert.ok(t.resources.every((row) => !row.unit.includes('×')), 'labels explain the unit in words');
+  const r = setResourceFromText(cfg, 'codex.sol', 'load', 'apply', 'high', '0,78');
+  const rec = r.config.models.find((m) => m.id === 'codex.sol').resources.subscription.load.apply.high;
+  assert.deepEqual([rec.value, rec.status], [7800, 'user-override']);
+  assert.equal(rec.origin.status, 'heuristic', 'provenance of the replaced value is kept');
+  const exported = effectiveFrom(d, exportOverrides(d, r.config));
+  assert.equal(exported.models.find((m) => m.id === 'codex.sol').resources.subscription.load.apply.high.value, 7800, 'export/import keeps 0.78');
+  const unchanged = effectiveFrom(d, exportOverrides(d, cfg));
+  assert.deepEqual(unchanged.models, cfg.models, 'opening and exporting without edits keeps every multiplier');
+  assert.equal(setResourceFromText(cfg, 'codex.sol', 'load', 'apply', 'high', '1.').ok, false, 'an unfinished number is not saved and not turned into unknown');
+  assert.equal(setResourceFromText(cfg, 'codex.sol', 'load', 'apply', 'high', '0').config.models.find((m) => m.id === 'codex.sol').resources.subscription.load.apply.high.value, 0);
+});
+
+test('11.6 typing filter: digits and one separator only; a paste is judged as a whole', () => {
+  for (const ok of ['', '1', '1.', '1,', '12.34', '0,78', '100', '1.23456']) assert.equal(isMultiplierDraft(ok), true, ok);
+  for (const bad of ['a', '1a', '×', '×1.2', '+1', '-1', '1e2', 'E', '1..', '1.,', '1,2,', '1abc2', ' 1']) assert.equal(isMultiplierDraft(bad), false, bad);
+  assert.equal(nextFieldText('1.2', 3, 3, '5'), '1.25');
+  assert.equal(nextFieldText('1.2', 0, 3, '0,78'), '0,78', 'pasting a valid number over a selection');
+  assert.equal(isMultiplierDraft(nextFieldText('1.2', 3, 3, '1abc2')), false, 'the whole paste is rejected, "1abc2" never becomes 12');
+  assert.equal(isMultiplierDraft(nextFieldText('1.2', 1, 1, ',')), false, 'a second separator is blocked');
+});
+
+test('11.1 floating layers stay hidden when the hidden attribute is set (no display rule overrides it)', () => {
+  const css = readFileSync(join(PKG, 'configurator', 'styles.css'), 'utf8');
+  assert.match(css, /\[hidden\][^{]*\{\s*display:\s*none\s*!important/);
+  const app = readFileSync(join(PKG, 'configurator', 'app.mjs'), 'utf8');
+  assert.match(app, /'beforeinput'/, 'invalid characters are blocked while typing');
+  assert.match(app, /addEventListener\('paste'/, 'paste is judged as a whole');
+  assert.doesNotMatch(readFileSync(join(PKG, 'configurator', 'index.html'), 'utf8'), /кнопкой «Нет данных»/);
 });
