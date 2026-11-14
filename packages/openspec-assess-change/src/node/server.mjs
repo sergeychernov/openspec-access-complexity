@@ -2,7 +2,7 @@
 // directories read-only (GET/HEAD), sends a strict same-origin CSP and has no write endpoint.
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync, realpathSync } from 'node:fs';
-import { join, extname, normalize } from 'node:path';
+import { join, extname, posix } from 'node:path';
 import { PACKAGE_ROOT } from './config.mjs';
 import { isInside } from './fsio.mjs';
 
@@ -26,9 +26,13 @@ export function resolveRequestPath(urlPath, root = PACKAGE_ROOT) {
     return null;
   }
   if (p.includes('\0')) return null;
-  const rel = normalize(p).replace(/^[/\\]+/, '');
-  if (!SERVED_DIRS.some((d) => rel === d || rel.startsWith(`${d}/`) || rel.startsWith(`${d}\\`))) return null;
-  const abs = join(root, rel);
+  // URL paths are POSIX on every platform: normalise them as such (never with the host separator), refuse
+  // backslashes and any ".." that survives normalisation, then map the segments onto the file system.
+  if (p.includes('\\')) return null;
+  const rel = posix.normalize(p).replace(/^\/+/, '');
+  if (rel.split('/').includes('..')) return null;
+  if (!SERVED_DIRS.some((d) => rel === d || rel.startsWith(`${d}/`))) return null;
+  const abs = join(root, ...rel.split('/'));
   if (!existsSync(abs) || !statSync(abs).isFile()) return null;
   const real = realpathSync(abs);
   const allowed = SERVED_DIRS.some((d) => existsSync(join(root, d)) && isInside(realpathSync(join(root, d)), real));

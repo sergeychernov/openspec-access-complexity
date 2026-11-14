@@ -11,7 +11,7 @@
 //   codex, antigravity → <project>/.agents/skills/openspec-assess-change
 //   claude-code        → <project>/.claude/skills/openspec-assess-change → ../../.agents/skills/openspec-assess-change
 import {
-  existsSync, mkdirSync, symlinkSync, readFileSync, cpSync, lstatSync, readlinkSync, realpathSync, rmSync,
+  existsSync, mkdirSync, symlinkSync, readFileSync, cpSync, lstatSync, realpathSync, rmSync,
 } from 'node:fs';
 import { join, dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -83,7 +83,8 @@ export function install({ project, clients, mode, force }) {
     const link = skillPath(project, 'claude-code');
     const target = relative(dirname(link), shared);
     if (exists(link)) {
-      const ok = lstatSync(link).isSymbolicLink() && readlinkSync(link) === target;
+      // Compare resolved targets: a Windows junction stores an absolute path, not the relative target.
+      const ok = lstatSync(link).isSymbolicLink() && existsSync(link) && realpathSync(link) === realpathSync(shared);
       if (!ok && !force) throw new Error(`${relative(project, link)} exists; pass --force to replace it`);
       if (!ok) rmSync(link, { recursive: true, force: true });
     }
@@ -116,7 +117,15 @@ export function check({ project, clients }) {
   return { rows, consistent: rows.every((r) => r.ok) && digests.size === 1 };
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// Run as a script (not imported)? Compares resolved paths; case-insensitive on Windows.
+function isMain() {
+  if (!process.argv[1]) return false;
+  const a = realpathSync(process.argv[1]);
+  const b = realpathSync(fileURLToPath(import.meta.url));
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+if (isMain()) {
   try {
     const o = parse(process.argv.slice(2));
     if (!o.check) {

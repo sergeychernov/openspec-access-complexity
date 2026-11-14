@@ -377,3 +377,14 @@ test('3.5 a later model version update does not touch earlier snapshots; the new
   const r = cli(p.dir, ['replay', join(p.changeRoot, 'assessment'), '--run', a.assessmentId, '--json']);
   assert.equal(r.json.reproduced, true, 'replay uses the old snapshot, not the new config');
 });
+
+test('samePath compares resolved entries (symlinks; case and separators on Windows), not strings', async () => {
+  const { samePath } = await import('../src/node/fsio.mjs');
+  const dir = tmp('osa-same-');
+  writeFileSync(join(dir, 'a.json'), '{}\n');
+  symlinkSync(join(dir, 'a.json'), join(dir, 'link.json'));
+  assert.equal(samePath(join(dir, 'a.json'), join(dir, '.', 'a.json')), true);
+  assert.equal(samePath(join(dir, 'link.json'), join(dir, 'a.json')), true, 'a symlink to the input is the input');
+  assert.equal(samePath(join(dir, 'a.json'), join(dir, 'b.json')), false);
+  if (process.platform === 'win32') assert.equal(samePath(join(dir, 'a.json'), join(dir, 'a.json').toUpperCase().replace(/\\/g, '/')), true);
+});

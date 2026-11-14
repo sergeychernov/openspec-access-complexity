@@ -113,7 +113,15 @@ export function compareGolden(files) {
   return diffs;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// Run as a script (not imported)? Compares resolved paths; case-insensitive on Windows.
+function isMain() {
+  if (!process.argv[1]) return false;
+  const a = realpathSync(process.argv[1]);
+  const b = realpathSync(fileURLToPath(import.meta.url));
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+if (isMain()) {
   const result = runExample({ keep: args.has('--keep') });
   if (args.has('--update-golden')) {
     mkdirSync(GOLDEN, { recursive: true });

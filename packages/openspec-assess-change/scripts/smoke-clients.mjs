@@ -124,4 +124,12 @@ async function main() {
   process.exitCode = out.ok ? 0 : 1;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();
+// Run as a script (not imported)? Compares resolved paths; case-insensitive on Windows.
+function isMain() {
+  if (!process.argv[1]) return false;
+  const a = realpathSync(process.argv[1]);
+  const b = realpathSync(fileURLToPath(import.meta.url));
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+if (isMain()) main();

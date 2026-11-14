@@ -224,7 +224,8 @@ test('7.3 server binds to loopback, serves only allowlisted package files and ha
     assert.match(page.headers['content-security-policy'], /default-src 'none'/);
     assert.equal((await get(`${base}/src/core/index.mjs`)).status, 200);
     assert.equal((await get(`${base}/config/defaults.json`)).status, 200);
-    for (const p of ['/package.json', '/src/node/fsio.mjs', '/bin/openspec-assess.mjs', '/configurator/../package.json', '/%2e%2e/%2e%2e/etc/passwd', '/examples/demo-project/src/greet.mjs']) {
+    assert.equal((await get(`${base}/schemas/config-3.schema.json`)).status, 200, 'nested allowlisted paths resolve on every OS');
+    for (const p of ['/package.json', '/src/node/fsio.mjs', '/bin/openspec-assess.mjs', '/configurator/../package.json', '/%2e%2e/%2e%2e/etc/passwd', '/examples/demo-project/src/greet.mjs', '/src%5Ccore%5Cindex.mjs', '/src/core/..%5C..%5Cpackage.json']) {
       assert.equal((await get(`${base}${p}`)).status, 404, p);
     }
     for (const m of ['POST', 'PUT', 'DELETE', 'PATCH']) assert.equal((await get(`${base}/config/defaults.json`, m)).status, 405, m);

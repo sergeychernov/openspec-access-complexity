@@ -8,7 +8,7 @@ import { canonicalStringify } from '../core/canonical.mjs';
 import { RANKING_KEYS } from '../core/ranking.mjs';
 import { formatMicros } from '../core/render-md.mjs';
 import {
-  AssessError, readJsonFile, canonicalDigest, sha256, assertContained, atomicWriteFile, canonicalBytes,
+  AssessError, readJsonFile, canonicalDigest, sha256, assertContained, atomicWriteFile, canonicalBytes, samePath,
 } from './fsio.mjs';
 import { resolveChange, readinessProblems, planningArtifactPaths } from './openspec.mjs';
 import { evidenceErrors, pinEvidence, gitToplevel } from './evidence.mjs';
@@ -244,7 +244,7 @@ const commands = {
     if (![1, 2].includes(from) || (overrides && overrides.schemaVersion !== from)) {
       throw new AssessError('usage', `migrate-config reads schemaVersion 1 or 2 inputs of the same version (defaults ${defaults.schemaVersion}, overrides ${overrides ? overrides.schemaVersion : 'none'})`);
     }
-    if ([fromDefaults, overridesPath].includes(out)) throw new AssessError('usage', '--out must differ from the input files; inputs are never overwritten');
+    if ([fromDefaults, overridesPath].some((p) => samePath(p, out))) throw new AssessError('usage', '--out must differ from the input files; inputs are never overwritten');
     if (/[\\/]assessment[\\/]runs[\\/]/.test(out)) throw new AssessError('usage', 'historical runs are immutable; choose an --out outside assessment/runs/');
     if (existsSync(out) && !opts.force) throw new AssessError('exists', `${opts.out} exists; pass --force to replace it`);
     const label = fromDefaults === LEGACY_DEFAULTS_V1_PATH ? 'config/legacy/defaults-v1.json' : (fromDefaults === LEGACY_DEFAULTS_V2_PATH ? 'config/legacy/defaults-v2.json' : 'old defaults');
@@ -268,7 +268,7 @@ const commands = {
     if (!opts.config || !opts.out) throw new AssessError('usage', 'switch-policy needs --config <schema-3 working config> and --out <file>');
     const src = resolve(opts.config);
     const out = resolve(opts.out);
-    if (src === out) throw new AssessError('usage', '--out must differ from --config; inputs are never overwritten');
+    if (samePath(src, out)) throw new AssessError('usage', '--out must differ from --config; inputs are never overwritten');
     if (/[\\/]assessment[\\/]runs[\\/]/.test(out)) throw new AssessError('usage', 'historical runs are immutable; choose an --out outside assessment/runs/');
     if (existsSync(out) && !opts.force) throw new AssessError('exists', `${opts.out} exists; pass --force to replace it`);
     const config = readJsonFile(src, 'config');

@@ -67,6 +67,17 @@ export function realpathLoose(p) {
   return join(realpathSync(cur), ...tail);
 }
 
+// True when two paths name the same file system entry: symlinks and junctions are resolved, and on
+// Windows the comparison ignores case and separator style (e.g. "D:/a/x" vs "d:\\a\\x").
+export function samePath(a, b) {
+  if (!a || !b) return false;
+  const norm = (p) => {
+    const r = realpathLoose(p);
+    return process.platform === 'win32' ? r.replace(/\//g, '\\').toLowerCase() : r;
+  };
+  return norm(a) === norm(b);
+}
+
 export function isInside(root, target) {
   const rel = relative(root, target);
   return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel));
