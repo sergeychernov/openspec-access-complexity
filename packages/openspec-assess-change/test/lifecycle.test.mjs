@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  existsSync, readFileSync, writeFileSync, rmSync, symlinkSync, mkdirSync, readdirSync, renameSync,
+  existsSync, readFileSync, writeFileSync, rmSync, symlinkSync, mkdirSync, readdirSync, renameSync, linkSync,
 } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -386,5 +386,9 @@ test('samePath compares resolved entries (symlinks; case and separators on Windo
   assert.equal(samePath(join(dir, 'a.json'), join(dir, '.', 'a.json')), true);
   assert.equal(samePath(join(dir, 'link.json'), join(dir, 'a.json')), true, 'a symlink to the input is the input');
   assert.equal(samePath(join(dir, 'a.json'), join(dir, 'b.json')), false);
+  linkSync(join(dir, 'a.json'), join(dir, 'hard.json'));
+  assert.equal(samePath(join(dir, 'hard.json'), join(dir, 'a.json')), true, 'another name of the same file (hard link, 8.3 short name) is the same file');
+  writeFileSync(join(dir, 'c.json'), '{}\n');
+  assert.equal(samePath(join(dir, 'c.json'), join(dir, 'a.json')), false, 'equal content is not the same file');
   if (process.platform === 'win32') assert.equal(samePath(join(dir, 'a.json'), join(dir, 'a.json').toUpperCase().replace(/\\/g, '/')), true);
 });

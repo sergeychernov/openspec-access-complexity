@@ -1,7 +1,7 @@
 // Node-only file helpers: digests, strict JSON I/O, path containment and atomic writes.
 import { createHash, randomBytes } from 'node:crypto';
 import {
-  readFileSync, writeFileSync, renameSync, existsSync, realpathSync, lstatSync, openSync, fsyncSync, closeSync, rmSync, mkdirSync,
+  readFileSync, writeFileSync, renameSync, existsSync, realpathSync, lstatSync, statSync, openSync, fsyncSync, closeSync, rmSync, mkdirSync,
 } from 'node:fs';
 import { dirname, join, resolve, relative, sep, isAbsolute, basename } from 'node:path';
 import { parseJsonStrict, canonicalStringify } from '../core/canonical.mjs';
@@ -67,13 +67,30 @@ export function realpathLoose(p) {
   return join(realpathSync(cur), ...tail);
 }
 
-// True when two paths name the same file system entry: symlinks and junctions are resolved, and on
-// Windows the comparison ignores case and separator style (e.g. "D:/a/x" vs "d:\\a\\x").
+// True when two paths name the same file system entry. When both exist the file identity (device +
+// inode / Windows file index) decides, so 8.3 short names (C:\\Users\\RUNNER~1), case, separators,
+// symlinks, junctions and hard links cannot hide that an output would overwrite an input. Otherwise the
+// resolved paths are compared (case- and separator-insensitive on Windows).
 export function samePath(a, b) {
   if (!a || !b) return false;
+  const id = (p) => {
+    try {
+      const st = statSync(p, { bigint: true });
+      return st.ino === 0n ? null : `${st.dev}:${st.ino}`;
+    } catch {
+      return null;
+    }
+  };
+  const ia = id(a);
+  const ib = id(b);
+  if (ia !== null && ib !== null) return ia === ib;
   const norm = (p) => {
-    const r = realpathLoose(p);
-    return process.platform === 'win32' ? r.replace(/\//g, '\\').toLowerCase() : r;
+    let r = realpathLoose(p);
+    if (process.platform === 'win32') {
+      try { r = realpathSync.native(r); } catch { /* not existing: keep the loose form */ }
+      r = r.replace(/\//g, '\\').toLowerCase();
+    }
+    return r;
   };
   return norm(a) === norm(b);
 }
