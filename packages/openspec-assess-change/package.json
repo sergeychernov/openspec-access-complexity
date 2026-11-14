@@ -1,0 +1,52 @@
+{
+  "name": "openspec-assess-change",
+  "version": "0.3.0",
+  "description": "Portable OpenSpec skill: evidence-based change complexity profile and deterministic model suitability rankings (apply/verify × API/subscription).",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "bin": {
+    "openspec-assess": "bin/openspec-assess.mjs"
+  },
+  "exports": {
+    ".": "./src/core/index.mjs",
+    "./core": "./src/core/index.mjs",
+    "./node": "./src/node/index.mjs"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "bin/",
+    "src/",
+    "schemas/",
+    "config/",
+    "configurator/",
+    "references/",
+    "examples/",
+    "scripts/"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "openspecAssess": {
+    "openspecCli": {
+      "package": "@fission-ai/openspec",
+      "tested": "2.0.0",
+      "range": ">=2.0.0 <3.0.0"
+    },
+    "supportedNode": ["22", "24", "26"],
+    "supportedOs": ["ubuntu-latest", "macos-latest", "windows-latest"]
+  },
+  "scripts": {
+    "test": "node scripts/run-tests.mjs unit",
+    "test:integration": "node scripts/run-tests.mjs integration",
+    "test:all": "node scripts/run-tests.mjs all",
+    "check": "node scripts/generate-schemas.mjs --check && node scripts/build-defaults.mjs --check",
+    "schemas": "node scripts/generate-schemas.mjs",
+    "defaults": "node scripts/build-defaults.mjs",
+    "example": "node examples/run-example.mjs",
+    "configure": "node bin/openspec-assess.mjs configure"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

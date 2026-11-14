@@ -1,0 +1,58 @@
+{
+  "asOf": "2026-11-14T12:00:00Z",
+  "assessmentId": "66b046efd6ee7f2ebae0870a6d62114c1690f1a68b84f6c6ee884d496ed278cc",
+  "change": {
+    "name": "add-shout-flag"
+  },
+  "inputs": {
+    "benchmarks.snapshot.json": "sha256:e31c54844b82a633559ce9b78e36aded0ffe0ac91e865b000b42c4e6f711df39",
+    "config.snapshot.json": "sha256:20c3dfef69739b137fc5f5c190bf59694f3010480942f29a4b1dd782fc278643",
+    "profile.json": "sha256:b6860bce704705172358fb59d6adb3df8a07626e49c58b09e7ac13a454958f8a"
+  },
+  "kind": "openspec-assess.manifest",
+  "outputs": {
+    "report.json": "sha256:a37485e923e25bc1f1a7622fec7983c6243f2a2da8f86fb00856f3512dbdbd82",
+    "report.md": "sha256:944e7f10f39f0ba3f8fb4e8aacddbecf27e3aa03857586cd1c3e0d96f554e9a6"
+  },
+  "schemaVersion": 1,
+  "sources": {
+    "artifacts": {
+      "design.md": "sha256:7a5ad452fb99a708fb86e7bb36265a0a2725c94d5c5efb46b5fe1d970f82418c",
+      "proposal.md": "sha256:75a8a05a51b10a8dcd14888b6c6e93d15793447e1982d6905dcedc4295ca737c",
+      "specs/greeting/spec.md": "sha256:4fbfffc9fdea02bb63de2ee645890dd1bfbeddb41694187fecd07af62dbdf1c2",
+      "tasks.md": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325"
+    },
+    "config": {
+      "defaults": "sha256:9e47ca6a9ac3aefbb9bf405515812de69e6d919ebb8c607752c60f9be2488caa",
+      "effective": "sha256:3695e4816e47c605335d6c063d79ade7aaa4547781b5bea02e96b7d3b25b56ae",
+      "overrides": "sha256:8b33337c392ab694abdb93eda7163d892525422b8bc24668bfd8a57861ae5c86"
+    },
+    "evidence": {
+      "design": "sha256:7a5ad452fb99a708fb86e7bb36265a0a2725c94d5c5efb46b5fe1d970f82418c",
+      "proposal": "sha256:75a8a05a51b10a8dcd14888b6c6e93d15793447e1982d6905dcedc4295ca737c",
+      "req-shout": "sha256:4fbfffc9fdea02bb63de2ee645890dd1bfbeddb41694187fecd07af62dbdf1c2",
+      "src-greet": "sha256:31a1a836b4ac3d11c7f741d7ca98608df38fbc02fa685b42c9389dacdbfbafce",
+      "task-1-1": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "task-1-2": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "task-2-1": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "tasks": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "test-greet": "sha256:cfde599b5a830d2040aa69cfcf19e26236bb17aab40de77a0443c92e40dfd920"
+    },
+    "scope": "sha256:42063bf3cd766569cab9bfb1f602cafe5c3183576259db67e4d5bd397974f9be"
+  },
+  "stage": "planning",
+  "version": {
+    "evaluator": 1,
+    "normalization": 1,
+    "package": "0.1.0",
+    "renderer": 1,
+    "schemas": {
+      "benchmarks": 1,
+      "config": 1,
+      "manifest": 1,
+      "profile": 1,
+      "report": 1
+    }
+  },
+  "versionDigest": "sha256:2c09483031a65703b8e1f3d54122c2f1af594e1218160b53025b609f7c421983"
+}

@@ -1,0 +1,214 @@
+{
+  "kind": "openspec-assess.benchmarks",
+  "mappings": [
+    {
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "factor": "architecture",
+      "id": "aa-cai-2.1.index.apply.architecture",
+      "metric": "index",
+      "phase": "apply",
+      "rationale": "Proxy for apply/architecture: implementation tasks include design decisions; aggregate pass rate is not an architecture measurement. No verify mapping: the index does not measure review or verification of an existing change.",
+      "relation": "proxy"
+    },
+    {
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "factor": "domains",
+      "id": "aa-cai-2.1.index.apply.domains",
+      "metric": "index",
+      "phase": "apply",
+      "rationale": "Proxy for apply/domains: tasks span several components; not a measurement of cross-domain design. No verify mapping: the index does not measure review or verification of an existing change.",
+      "relation": "proxy"
+    },
+    {
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "factor": "layers",
+      "id": "aa-cai-2.1.index.apply.layers",
+      "metric": "index",
+      "phase": "apply",
+      "rationale": "Proxy for apply/layers: terminal and code tasks cross tooling/code boundaries; not a per-layer measurement. No verify mapping: the index does not measure review or verification of an existing change.",
+      "relation": "proxy"
+    },
+    {
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "factor": "logic",
+      "id": "aa-cai-2.1.index.apply.logic",
+      "metric": "index",
+      "phase": "apply",
+      "rationale": "Proxy for apply/logic: implementation tasks require non-trivial algorithms; aggregate pass rate, not a logic-only measurement. No verify mapping: the index does not measure review or verification of an existing change.",
+      "relation": "proxy"
+    },
+    {
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "factor": "volume",
+      "id": "aa-cai-2.1.index.apply.volume",
+      "metric": "index",
+      "phase": "apply",
+      "rationale": "Proxy for apply/volume: multi-file repository tasks partly exercise large-scope edits; aggregate score, not a volume measurement. No verify mapping: the index does not measure review or verification of an existing change.",
+      "relation": "proxy"
+    }
+  ],
+  "note": "Independent measurements read from the public Artificial Analysis coding-agents page (rendered charts) on 2026-11-14. Only exact harness/model/effort matches for catalog candidates are recorded. Mappings are proxy-only and apply-only; there is no comparable independent verify measurement, so verify coefficients stay heuristic. Haiku 5.5, Luna, Hydrogen and Flash have no record in this snapshot.",
+  "records": [
+    {
+      "attempts": 3,
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "conditions": "Composite of FrontierCode-AA 2.0 (132 tasks), Terminal-Bench 4.1 (66 tasks), SWE-Atlas-QnA-AA (124 tasks), equal weights; agent run in its own harness. Index points stored x100 as bp.",
+      "id": "aa-cai-2.1.antigravity.argon.high",
+      "metric": "index",
+      "model": {
+        "effort": "high",
+        "harness": "antigravity",
+        "modelId": "gemini-4-argon"
+      },
+      "score": 4500,
+      "source": {
+        "kind": "independent",
+        "publisher": "Artificial Analysis",
+        "retrievedAt": "2026-11-14",
+        "url": "https://artificialanalysis.ai/agents/coding-agents"
+      },
+      "uncertainty": "Mean over three attempts per task; the page publishes no confidence interval.",
+      "unit": "bp"
+    },
+    {
+      "attempts": 3,
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "conditions": "Composite of FrontierCode-AA 2.0 (132 tasks), Terminal-Bench 4.1 (66 tasks), SWE-Atlas-QnA-AA (124 tasks), equal weights; agent run in its own harness. Index points stored x100 as bp.",
+      "id": "aa-cai-2.1.claude-code.opus-5-5.max",
+      "metric": "index",
+      "model": {
+        "effort": "max",
+        "harness": "claude-code",
+        "modelId": "claude-opus-5-5"
+      },
+      "score": 5800,
+      "source": {
+        "kind": "independent",
+        "publisher": "Artificial Analysis",
+        "retrievedAt": "2026-11-14",
+        "url": "https://artificialanalysis.ai/agents/coding-agents"
+      },
+      "uncertainty": "Mean over three attempts per task; the page publishes no confidence interval.",
+      "unit": "bp"
+    },
+    {
+      "attempts": 3,
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "conditions": "Composite of FrontierCode-AA 2.0 (132 tasks), Terminal-Bench 4.1 (66 tasks), SWE-Atlas-QnA-AA (124 tasks), equal weights; agent run in its own harness. Index points stored x100 as bp.",
+      "id": "aa-cai-2.1.claude-code.sonnet-5-5.max",
+      "metric": "index",
+      "model": {
+        "effort": "max",
+        "harness": "claude-code",
+        "modelId": "claude-sonnet-5-5"
+      },
+      "score": 5600,
+      "source": {
+        "kind": "independent",
+        "publisher": "Artificial Analysis",
+        "retrievedAt": "2026-11-14",
+        "url": "https://artificialanalysis.ai/agents/coding-agents"
+      },
+      "uncertainty": "Mean over three attempts per task; the page publishes no confidence interval.",
+      "unit": "bp"
+    },
+    {
+      "attempts": 3,
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "conditions": "Composite of FrontierCode-AA 2.0 (132 tasks), Terminal-Bench 4.1 (66 tasks), SWE-Atlas-QnA-AA (124 tasks), equal weights; agent run in its own harness. Index points stored x100 as bp.",
+      "id": "aa-cai-2.1.codex.astra.max",
+      "metric": "index",
+      "model": {
+        "effort": "max",
+        "harness": "codex",
+        "modelId": "gpt-6-astra"
+      },
+      "score": 5300,
+      "source": {
+        "kind": "independent",
+        "publisher": "Artificial Analysis",
+        "retrievedAt": "2026-11-14",
+        "url": "https://artificialanalysis.ai/agents/coding-agents"
+      },
+      "uncertainty": "Mean over three attempts per task; the page publishes no confidence interval.",
+      "unit": "bp"
+    },
+    {
+      "attempts": 3,
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "conditions": "Composite of FrontierCode-AA 2.0 (132 tasks), Terminal-Bench 4.1 (66 tasks), SWE-Atlas-QnA-AA (124 tasks), equal weights; agent run in its own harness. Index points stored x100 as bp.",
+      "id": "aa-cai-2.1.codex.sol.max",
+      "metric": "index",
+      "model": {
+        "effort": "max",
+        "harness": "codex",
+        "modelId": "gpt-6.1-sol"
+      },
+      "score": 5200,
+      "source": {
+        "kind": "independent",
+        "publisher": "Artificial Analysis",
+        "retrievedAt": "2026-11-14",
+        "url": "https://artificialanalysis.ai/agents/coding-agents"
+      },
+      "uncertainty": "Mean over three attempts per task; the page publishes no confidence interval.",
+      "unit": "bp"
+    },
+    {
+      "attempts": 3,
+      "benchmark": {
+        "name": "Artificial Analysis Coding Agent Index",
+        "version": "v2.1"
+      },
+      "conditions": "Composite of FrontierCode-AA 2.0 (132 tasks), Terminal-Bench 4.1 (66 tasks), SWE-Atlas-QnA-AA (124 tasks), equal weights; agent run in its own harness. Index points stored x100 as bp.",
+      "id": "aa-cai-2.1.codex.terra.max",
+      "metric": "index",
+      "model": {
+        "effort": "max",
+        "harness": "codex",
+        "modelId": "gpt-6.1-terra"
+      },
+      "score": 4900,
+      "source": {
+        "kind": "independent",
+        "publisher": "Artificial Analysis",
+        "retrievedAt": "2026-11-14",
+        "url": "https://artificialanalysis.ai/agents/coding-agents"
+      },
+      "uncertainty": "Mean over three attempts per task; the page publishes no confidence interval.",
+      "unit": "bp"
+    }
+  ],
+  "schemaVersion": 1,
+  "snapshotDate": "2026-11-14"
+}

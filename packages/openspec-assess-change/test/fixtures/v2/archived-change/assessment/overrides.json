@@ -1,0 +1,16 @@
+{
+  "kind": "openspec-assess.overrides",
+  "schemaVersion": 2,
+  "note": "Example account: Codex and Claude Code plans are available; Antigravity availability was not checked and stays unknown.",
+  "set": {
+    "models": [
+      { "id": "codex.astra", "availability": "available" },
+      { "id": "codex.sol", "availability": "available" },
+      { "id": "codex.terra", "availability": "available" },
+      { "id": "codex.luna", "availability": "available" },
+      { "id": "claude-code.opus", "availability": "available" },
+      { "id": "claude-code.sonnet", "availability": "available" },
+      { "id": "claude-code.haiku", "availability": "available" }
+    ]
+  }
+}

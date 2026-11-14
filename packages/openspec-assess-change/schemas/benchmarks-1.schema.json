@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openspec-assess.local/schemas/benchmarks-1.schema.json",
+  "title": "Benchmark evidence snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "snapshotDate",
+    "records",
+    "mappings"
+  ],
+  "properties": {
+    "kind": {
+      "const": "openspec-assess.benchmarks"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "snapshotDate": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "benchmark": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publisher": {
+                "type": "string",
+                "minLength": 1
+              },
+              "retrievedAt": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+              },
+              "kind": {
+                "enum": [
+                  "independent",
+                  "provider-claim"
+                ]
+              }
+            },
+            "required": [
+              "url",
+              "publisher",
+              "retrievedAt",
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          "model": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "harness": {
+                "type": "string",
+                "minLength": 1
+              },
+              "effort": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "modelId",
+              "harness",
+              "effort"
+            ],
+            "additionalProperties": false
+          },
+          "metric": {
+            "type": "string",
+            "minLength": 1
+          },
+          "score": {
+            "type": "integer"
+          },
+          "unit": {
+            "enum": [
+              "bp",
+              "count",
+              "micros",
+              "seconds",
+              "tokens"
+            ]
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uncertainty": {
+            "type": "string",
+            "minLength": 1
+          },
+          "conditions": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "benchmark",
+          "source",
+          "model",
+          "metric",
+          "score",
+          "unit"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "benchmark": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "metric": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "enum": [
+              "apply",
+              "verify"
+            ]
+          },
+          "factor": {
+            "enum": [
+              "volume",
+              "domains",
+              "layers",
+              "architecture",
+              "logic",
+              "compatibility",
+              "testability",
+              "consequences",
+              "uncertainty"
+            ]
+          },
+          "relation": {
+            "enum": [
+              "direct",
+              "proxy"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "benchmark",
+          "metric",
+          "phase",
+          "factor",
+          "relation",
+          "rationale"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

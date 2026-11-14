@@ -1,0 +1,2111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openspec-assess.local/schemas/config-3.schema.json",
+  "title": "Effective assessment configuration v3 (explicit per-effort estimates, explicit selection policy)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schemaVersion",
+    "catalog",
+    "complexityRules",
+    "phases",
+    "workloads",
+    "harnesses",
+    "models",
+    "pricing",
+    "quotaPools",
+    "constraints",
+    "selection"
+  ],
+  "properties": {
+    "kind": {
+      "const": "openspec-assess.config"
+    },
+    "schemaVersion": {
+      "const": 3
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "defaults": {
+          "type": "string",
+          "minLength": 1
+        },
+        "overridePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "defaults",
+        "overridePaths"
+      ],
+      "additionalProperties": false
+    },
+    "catalog": {
+      "type": "object",
+      "properties": {
+        "verifiedAt": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "url",
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "verifiedAt",
+        "note",
+        "sources"
+      ],
+      "additionalProperties": false
+    },
+    "complexityRules": {
+      "type": "object",
+      "properties": {
+        "volumeThresholds": {
+          "type": "object",
+          "properties": {
+            "tasks": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "diffLines": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "required": [
+            "tasks",
+            "files",
+            "diffLines"
+          ],
+          "additionalProperties": false
+        },
+        "groups": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "complexity": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "risk": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "uncertainty": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "volume",
+            "complexity",
+            "risk",
+            "uncertainty"
+          ],
+          "additionalProperties": false
+        },
+        "unknownRankingLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "workloadCategories": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "upToBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "id",
+              "upToBp"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "volumeThresholds",
+        "groups",
+        "unknownRankingLevel",
+        "workloadCategories",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "phases": {
+      "type": "object",
+      "properties": {
+        "apply": {
+          "$ref": "#/$defs/phase"
+        },
+        "verify": {
+          "$ref": "#/$defs/phase"
+        }
+      },
+      "required": [
+        "apply",
+        "verify"
+      ],
+      "additionalProperties": false
+    },
+    "workloads": {
+      "type": "object",
+      "properties": {
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "apply": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "low": {
+                    "$ref": "#/$defs/usage"
+                  },
+                  "typical": {
+                    "$ref": "#/$defs/usage"
+                  },
+                  "high": {
+                    "$ref": "#/$defs/usage"
+                  }
+                },
+                "required": [
+                  "low",
+                  "typical",
+                  "high"
+                ],
+                "additionalProperties": false
+              },
+              "minProperties": 1
+            },
+            "verify": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "low": {
+                    "$ref": "#/$defs/usage"
+                  },
+                  "typical": {
+                    "$ref": "#/$defs/usage"
+                  },
+                  "high": {
+                    "$ref": "#/$defs/usage"
+                  }
+                },
+                "required": [
+                  "low",
+                  "typical",
+                  "high"
+                ],
+                "additionalProperties": false
+              },
+              "minProperties": 1
+            }
+          },
+          "required": [
+            "apply",
+            "verify"
+          ],
+          "additionalProperties": false
+        },
+        "subscription": {
+          "type": "object",
+          "properties": {
+            "apply": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "low": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "typical": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "high": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "low",
+                  "typical",
+                  "high"
+                ],
+                "additionalProperties": false
+              },
+              "minProperties": 1
+            },
+            "verify": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "low": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "typical": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "high": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "low",
+                  "typical",
+                  "high"
+                ],
+                "additionalProperties": false
+              },
+              "minProperties": 1
+            }
+          },
+          "required": [
+            "apply",
+            "verify"
+          ],
+          "additionalProperties": false
+        },
+        "timeMinutes": {
+          "type": "object",
+          "properties": {
+            "apply": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "low": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "typical": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "high": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "low",
+                  "typical",
+                  "high"
+                ],
+                "additionalProperties": false
+              },
+              "minProperties": 1
+            },
+            "verify": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "low": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "typical": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "high": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "low",
+                  "typical",
+                  "high"
+                ],
+                "additionalProperties": false
+              },
+              "minProperties": 1
+            }
+          },
+          "required": [
+            "apply",
+            "verify"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "basis",
+        "api",
+        "subscription",
+        "timeMinutes"
+      ],
+      "additionalProperties": false
+    },
+    "harnesses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "docs": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "models": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "pricing": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pricing"
+      }
+    },
+    "quotaPools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/quotaPool"
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "minContextTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requiredCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "maxCostMicros": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "maxCostMicros"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "minContextTokens",
+        "requiredCapabilities",
+        "api"
+      ],
+      "additionalProperties": false
+    },
+    "selection": {
+      "type": "object",
+      "properties": {
+        "policy": {
+          "enum": [
+            "minimum-resource-with-time-penalty",
+            "weighted-utility"
+          ]
+        },
+        "policyVersion": {
+          "const": 1
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "weights": {
+              "$ref": "#/$defs/selectionWeights"
+            },
+            "anchors": {
+              "type": "object",
+              "properties": {
+                "costMicros": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "timeMinutes": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "costMicros",
+                "timeMinutes"
+              ],
+              "additionalProperties": false
+            },
+            "timePenalty": {
+              "$ref": "#/$defs/timePenalty"
+            }
+          },
+          "required": [
+            "currency"
+          ],
+          "additionalProperties": false
+        },
+        "subscription": {
+          "type": "object",
+          "properties": {
+            "weights": {
+              "$ref": "#/$defs/selectionWeights"
+            },
+            "anchors": {
+              "type": "object",
+              "properties": {
+                "load": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "timeMinutes": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "load",
+                "timeMinutes"
+              ],
+              "additionalProperties": false
+            },
+            "timePenalty": {
+              "$ref": "#/$defs/timePenalty"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "policy",
+        "policyVersion",
+        "api",
+        "subscription",
+        "basis"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "usage": {
+      "type": "object",
+      "properties": {
+        "uncachedInputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cacheReadTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cacheWriteTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasoningTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "peakContextTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "toolCalls": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "uncachedInputTokens",
+        "cacheReadTokens",
+        "cacheWriteTokens",
+        "outputTokens",
+        "reasoningTokens",
+        "peakContextTokens"
+      ],
+      "additionalProperties": false
+    },
+    "phase": {
+      "type": "object",
+      "properties": {
+        "relevanceWeights": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "volume",
+              "domains",
+              "layers",
+              "architecture",
+              "logic",
+              "compatibility",
+              "testability",
+              "consequences",
+              "uncertainty"
+            ]
+          },
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "required": [
+            "volume",
+            "domains",
+            "layers",
+            "architecture",
+            "logic",
+            "compatibility",
+            "testability",
+            "consequences",
+            "uncertainty"
+          ]
+        },
+        "qualityFloors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "fromDemandBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              },
+              "floorBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "fromDemandBp",
+              "floorBp"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "criticalFactors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "factor": {
+                "enum": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "whenLevelAtLeast": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              "minCoefficientBp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000
+              }
+            },
+            "required": [
+              "factor",
+              "whenLevelAtLeast",
+              "minCoefficientBp"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "relevanceWeights",
+        "qualityFloors",
+        "criticalFactors",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "selectionWeights": {
+      "type": "object",
+      "properties": {
+        "quality": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "economy": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "time": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "quality",
+        "economy",
+        "time"
+      ],
+      "additionalProperties": false
+    },
+    "timePenalty": {
+      "type": "object",
+      "properties": {
+        "graceMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "intervalMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "rateBp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        }
+      },
+      "required": [
+        "graceMinutes",
+        "intervalMinutes",
+        "rateBp"
+      ],
+      "additionalProperties": false
+    },
+    "qualityRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "status",
+        "basis"
+      ],
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "measured",
+            "proxy",
+            "heuristic",
+            "unknown",
+            "user-override"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "support": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "inheritedFrom": {
+          "type": "object",
+          "properties": {
+            "modelId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "harness": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            },
+            "status": {
+              "enum": [
+                "measured",
+                "proxy",
+                "heuristic",
+                "unknown",
+                "user-override"
+              ]
+            }
+          },
+          "required": [
+            "modelId",
+            "harness",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "migratedFrom": {
+          "type": "object",
+          "properties": {
+            "fromSchemaVersion": {
+              "const": 1
+            },
+            "rule": {
+              "enum": [
+                "byEffort",
+                "base+delta",
+                "resource"
+              ]
+            },
+            "base": {
+              "type": "object"
+            },
+            "effortDelta": {
+              "type": "object"
+            },
+            "entry": {
+              "type": "object"
+            },
+            "clamped": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "fromSchemaVersion",
+            "rule",
+            "note"
+          ],
+          "additionalProperties": false
+        },
+        "origin": {
+          "$ref": "#/$defs/qualityOrigin"
+        }
+      }
+    },
+    "qualityOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "status",
+        "basis"
+      ],
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "measured",
+            "proxy",
+            "heuristic",
+            "unknown",
+            "user-override"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "support": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "inheritedFrom": {
+          "type": "object",
+          "properties": {
+            "modelId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "harness": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            },
+            "status": {
+              "enum": [
+                "measured",
+                "proxy",
+                "heuristic",
+                "unknown",
+                "user-override"
+              ]
+            }
+          },
+          "required": [
+            "modelId",
+            "harness",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "migratedFrom": {
+          "type": "object",
+          "properties": {
+            "fromSchemaVersion": {
+              "const": 1
+            },
+            "rule": {
+              "enum": [
+                "byEffort",
+                "base+delta",
+                "resource"
+              ]
+            },
+            "base": {
+              "type": "object"
+            },
+            "effortDelta": {
+              "type": "object"
+            },
+            "entry": {
+              "type": "object"
+            },
+            "clamped": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "fromSchemaVersion",
+            "rule",
+            "note"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "resourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "status",
+        "basis"
+      ],
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "measured",
+            "proxy",
+            "heuristic",
+            "unknown",
+            "user-override"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "support": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "inheritedFrom": {
+          "type": "object",
+          "properties": {
+            "modelId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "harness": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            },
+            "status": {
+              "enum": [
+                "measured",
+                "proxy",
+                "heuristic",
+                "unknown",
+                "user-override"
+              ]
+            }
+          },
+          "required": [
+            "modelId",
+            "harness",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "migratedFrom": {
+          "type": "object",
+          "properties": {
+            "fromSchemaVersion": {
+              "const": 1
+            },
+            "rule": {
+              "enum": [
+                "byEffort",
+                "base+delta",
+                "resource"
+              ]
+            },
+            "base": {
+              "type": "object"
+            },
+            "effortDelta": {
+              "type": "object"
+            },
+            "entry": {
+              "type": "object"
+            },
+            "clamped": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "fromSchemaVersion",
+            "rule",
+            "note"
+          ],
+          "additionalProperties": false
+        },
+        "origin": {
+          "$ref": "#/$defs/resourceOrigin"
+        }
+      }
+    },
+    "resourceOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "status",
+        "basis"
+      ],
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "measured",
+            "proxy",
+            "heuristic",
+            "unknown",
+            "user-override"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "support": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "uniqueItems": true
+        },
+        "inheritedFrom": {
+          "type": "object",
+          "properties": {
+            "modelId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "harness": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            },
+            "status": {
+              "enum": [
+                "measured",
+                "proxy",
+                "heuristic",
+                "unknown",
+                "user-override"
+              ]
+            }
+          },
+          "required": [
+            "modelId",
+            "harness",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "migratedFrom": {
+          "type": "object",
+          "properties": {
+            "fromSchemaVersion": {
+              "const": 1
+            },
+            "rule": {
+              "enum": [
+                "byEffort",
+                "base+delta",
+                "resource"
+              ]
+            },
+            "base": {
+              "type": "object"
+            },
+            "effortDelta": {
+              "type": "object"
+            },
+            "entry": {
+              "type": "object"
+            },
+            "clamped": {
+              "type": "boolean"
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "fromSchemaVersion",
+            "rule",
+            "note"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "family",
+        "displayName",
+        "modelId",
+        "harness",
+        "clientModelId",
+        "enabled",
+        "availability",
+        "supportedEfforts",
+        "contextWindowTokens",
+        "capabilities",
+        "identity",
+        "quality",
+        "resources"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "modelId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "harness": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "clientModelId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "availability": {
+          "enum": [
+            "available",
+            "unavailable",
+            "unknown"
+          ]
+        },
+        "supportedEfforts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "efforts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "contextWindowTokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "capabilities": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "uniqueItems": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "identity": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "confirmed",
+                "unconfirmed"
+              ]
+            },
+            "checkedAt": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "uniqueItems": true
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "status",
+            "checkedAt",
+            "sources"
+          ],
+          "additionalProperties": false
+        },
+        "quality": {
+          "type": "object",
+          "properties": {
+            "apply": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "volume",
+                    "domains",
+                    "layers",
+                    "architecture",
+                    "logic",
+                    "compatibility",
+                    "testability",
+                    "consequences",
+                    "uncertainty"
+                  ]
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/qualityRecord"
+                },
+                "required": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "minProperties": 1
+            },
+            "verify": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z0-9][a-z0-9._-]*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "volume",
+                    "domains",
+                    "layers",
+                    "architecture",
+                    "logic",
+                    "compatibility",
+                    "testability",
+                    "consequences",
+                    "uncertainty"
+                  ]
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/qualityRecord"
+                },
+                "required": [
+                  "volume",
+                  "domains",
+                  "layers",
+                  "architecture",
+                  "logic",
+                  "compatibility",
+                  "testability",
+                  "consequences",
+                  "uncertainty"
+                ]
+              },
+              "minProperties": 1
+            }
+          },
+          "required": [
+            "apply",
+            "verify"
+          ],
+          "additionalProperties": false
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "api": {
+              "type": "object",
+              "properties": {
+                "pricingId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "usage": {
+                  "type": "object",
+                  "properties": {
+                    "unit": {
+                      "const": "token-workload-multiplier-bp"
+                    },
+                    "apply": {
+                      "type": "object",
+                      "propertyNames": {
+                        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                      },
+                      "additionalProperties": {
+                        "$ref": "#/$defs/resourceRecord"
+                      },
+                      "minProperties": 1
+                    },
+                    "verify": {
+                      "type": "object",
+                      "propertyNames": {
+                        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                      },
+                      "additionalProperties": {
+                        "$ref": "#/$defs/resourceRecord"
+                      },
+                      "minProperties": 1
+                    }
+                  },
+                  "required": [
+                    "unit",
+                    "apply",
+                    "verify"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "pricingId",
+                "usage"
+              ],
+              "additionalProperties": false
+            },
+            "subscription": {
+              "type": "object",
+              "properties": {
+                "poolId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "load": {
+                  "type": "object",
+                  "properties": {
+                    "unit": {
+                      "const": "load-workload-multiplier-bp"
+                    },
+                    "apply": {
+                      "type": "object",
+                      "propertyNames": {
+                        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                      },
+                      "additionalProperties": {
+                        "$ref": "#/$defs/resourceRecord"
+                      },
+                      "minProperties": 1
+                    },
+                    "verify": {
+                      "type": "object",
+                      "propertyNames": {
+                        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                      },
+                      "additionalProperties": {
+                        "$ref": "#/$defs/resourceRecord"
+                      },
+                      "minProperties": 1
+                    }
+                  },
+                  "required": [
+                    "unit",
+                    "apply",
+                    "verify"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "poolId",
+                "load"
+              ],
+              "additionalProperties": false
+            },
+            "time": {
+              "type": "object",
+              "properties": {
+                "minutes": {
+                  "type": "object",
+                  "properties": {
+                    "unit": {
+                      "const": "time-workload-multiplier-bp"
+                    },
+                    "apply": {
+                      "type": "object",
+                      "propertyNames": {
+                        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                      },
+                      "additionalProperties": {
+                        "$ref": "#/$defs/resourceRecord"
+                      },
+                      "minProperties": 1
+                    },
+                    "verify": {
+                      "type": "object",
+                      "propertyNames": {
+                        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                      },
+                      "additionalProperties": {
+                        "$ref": "#/$defs/resourceRecord"
+                      },
+                      "minProperties": 1
+                    }
+                  },
+                  "required": [
+                    "unit",
+                    "apply",
+                    "verify"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "minutes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "api",
+            "subscription",
+            "time"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "pricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "currency",
+        "tier",
+        "rates",
+        "reasoningBilling",
+        "longContext",
+        "toolCharges"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "status": {
+          "enum": [
+            "confirmed",
+            "example",
+            "unknown"
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "tier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "checkedAt": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            }
+          },
+          "required": [
+            "url",
+            "checkedAt"
+          ],
+          "additionalProperties": false
+        },
+        "rates": {
+          "type": "object",
+          "properties": {
+            "uncachedInput": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cacheRead": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cacheWrite": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "output": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reasoning": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "uncachedInput",
+            "cacheRead",
+            "cacheWrite",
+            "output",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        "reasoningBilling": {
+          "enum": [
+            "as-output",
+            "separate"
+          ]
+        },
+        "longContext": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "thresholdTokens": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "rates": {
+                  "type": "object",
+                  "properties": {
+                    "uncachedInput": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "cacheRead": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "cacheWrite": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "output": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "reasoning": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "uncachedInput",
+                    "cacheRead",
+                    "cacheWrite",
+                    "output",
+                    "reasoning"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "thresholdTokens",
+                "rates"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "toolCharges": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "quotaPool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "harness",
+        "label",
+        "observation",
+        "conversion"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "harness": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observation": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "observedAt": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+                },
+                "maxAgeHours": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "remaining": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "unit": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "resetAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "observedAt",
+                "maxAgeHours",
+                "remaining",
+                "unit",
+                "resetAt",
+                "source"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "conversion": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "quotaUnitsPer1000Load": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "unit": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "quotaUnitsPer1000Load",
+                "unit",
+                "source"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "change": {
+    "name": "add-shout-flag"
+  },
+  "evidence": [
+    {
+      "base": "change",
+      "digest": "sha256:75a8a05a51b10a8dcd14888b6c6e93d15793447e1982d6905dcedc4295ca737c",
+      "id": "proposal",
+      "kind": "artifact",
+      "note": "why: emphatic greeting; impact: one source file and its test",
+      "path": "proposal.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:7a5ad452fb99a708fb86e7bb36265a0a2725c94d5c5efb46b5fe1d970f82418c",
+      "id": "design",
+      "kind": "artifact",
+      "note": "additive option, no CLI flag",
+      "path": "design.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "id": "tasks",
+      "kind": "artifact",
+      "note": "three tasks",
+      "path": "tasks.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:4fbfffc9fdea02bb63de2ee645890dd1bfbeddb41694187fecd07af62dbdf1c2",
+      "id": "req-shout",
+      "kind": "requirement",
+      "locator": "Shout option",
+      "note": "default output unchanged; shout returns upper case",
+      "path": "specs/greeting/spec.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "id": "task-1-1",
+      "kind": "task",
+      "locator": "1.1",
+      "note": "add the option in src/greet.mjs",
+      "path": "tasks.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "id": "task-1-2",
+      "kind": "task",
+      "locator": "1.2",
+      "note": "tests for default and shout output",
+      "path": "tasks.md"
+    },
+    {
+      "base": "change",
+      "digest": "sha256:dc14eaae62117759c254a011480e914b4eb588cb25db8389335785ac1132d325",
+      "id": "task-2-1",
+      "kind": "task",
+      "locator": "2.1",
+      "note": "document the option in docs/usage.md",
+      "path": "tasks.md"
+    },
+    {
+      "base": "repo",
+      "digest": "sha256:31a1a836b4ac3d11c7f741d7ca98608df38fbc02fa685b42c9389dacdbfbafce",
+      "id": "src-greet",
+      "kind": "file",
+      "note": "single exported function, 3 lines of logic",
+      "path": "src/greet.mjs"
+    },
+    {
+      "base": "repo",
+      "digest": "sha256:cfde599b5a830d2040aa69cfcf19e26236bb17aab40de77a0443c92e40dfd920",
+      "id": "test-greet",
+      "kind": "file",
+      "note": "exact-output test exists",
+      "path": "test/greet.test.mjs"
+    },
+    {
+      "base": "repo",
+      "derivedFrom": [
+        "task-2-1"
+      ],
+      "id": "docs-usage",
+      "kind": "file",
+      "note": "new documentation file, not created yet",
+      "path": "docs/usage.md",
+      "planned": true
+    }
+  ],
+  "factors": {
+    "architecture": {
+      "evidence": [
+        "design"
+      ],
+      "kind": "declared",
+      "level": 0,
+      "rationale": "rubric 0: no new component, contract or dependency; design keeps one function",
+      "state": "known"
+    },
+    "compatibility": {
+      "evidence": [
+        "req-shout",
+        "design"
+      ],
+      "kind": "declared",
+      "level": 1,
+      "rationale": "rubric 1: additive option on an exported function; default output unchanged",
+      "state": "known"
+    },
+    "consequences": {
+      "evidence": [
+        "proposal"
+      ],
+      "kind": "declared",
+      "level": 1,
+      "rationale": "rubric 1: local defect in greeting text, trivially reverted",
+      "state": "known"
+    },
+    "domains": {
+      "details": {
+        "domainIds": [
+          "greeting"
+        ],
+        "links": 0
+      },
+      "evidence": [
+        "proposal"
+      ],
+      "kind": "declared",
+      "level": 0,
+      "rationale": "rubric 0: one domain (greeting), links to other domains unchanged",
+      "state": "known"
+    },
+    "layers": {
+      "details": {
+        "boundaryCrossings": 0,
+        "layerCategories": [
+          "domain",
+          "tests",
+          "docs"
+        ]
+      },
+      "evidence": [
+        "task-1-1",
+        "task-1-2",
+        "task-2-1"
+      ],
+      "kind": "declared",
+      "level": 1,
+      "rationale": "rubric 1: domain code with local touch of tests and docs, no boundary crossing",
+      "state": "known"
+    },
+    "logic": {
+      "evidence": [
+        "design",
+        "src-greet"
+      ],
+      "kind": "declared",
+      "level": 1,
+      "rationale": "rubric 1: one simple branch and a string transformation",
+      "state": "known"
+    },
+    "testability": {
+      "evidence": [
+        "req-shout",
+        "test-greet"
+      ],
+      "kind": "declared",
+      "level": 0,
+      "rationale": "rubric 0: exact string oracle, fast local unit test",
+      "state": "known"
+    },
+    "uncertainty": {
+      "evidence": [
+        "design",
+        "req-shout"
+      ],
+      "kind": "declared",
+      "level": 0,
+      "rationale": "rubric 0: decisions closed in design, scenarios fully specify the output",
+      "state": "known"
+    }
+  },
+  "kind": "openspec-assess.profile",
+  "quantities": {
+    "diffLines": {
+      "evidence": [
+        "task-1-1",
+        "task-1-2",
+        "task-2-1"
+      ],
+      "kind": "estimated",
+      "max": 60,
+      "min": 20,
+      "rationale": "one option with a branch, two tests and a short doc section",
+      "state": "known"
+    },
+    "files": {
+      "evidence": [
+        "task-1-1",
+        "task-1-2",
+        "docs-usage"
+      ],
+      "kind": "estimated",
+      "max": 4,
+      "min": 3,
+      "rationale": "greet.mjs, its test and the planned docs/usage.md; README may also be touched",
+      "state": "known"
+    },
+    "generatedFiles": {
+      "rationale": "no code generation in this project",
+      "state": "not-applicable"
+    },
+    "tasks": {
+      "evidence": [
+        "tasks"
+      ],
+      "kind": "measured",
+      "max": 3,
+      "min": 3,
+      "rationale": "three checklist items in tasks.md",
+      "state": "known"
+    }
+  },
+  "schemaVersion": 1,
+  "scope": {
+    "mode": "all-tasks"
+  },
+  "stage": "planning"
+}

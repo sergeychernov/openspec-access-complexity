@@ -1,0 +1,50 @@
+name: openspec-assess-change
+
+on:
+  push:
+    paths:
+      - 'packages/openspec-assess-change/**'
+      - '.github/workflows/openspec-assess-change.yml'
+  pull_request:
+    paths:
+      - 'packages/openspec-assess-change/**'
+      - '.github/workflows/openspec-assess-change.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: node ${{ matrix.node }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['22', '24', '26']
+    defaults:
+      run:
+        working-directory: packages/openspec-assess-change
+    env:
+      # Offline by design: no credentials, no model calls, no publishing.
+      NO_COLOR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install pinned OpenSpec CLI
+        run: npm install -g @fission-ai/openspec@2.0.0
+      - name: Git identity for fixtures
+        run: |
+          git config --global user.email ci@example.invalid
+          git config --global user.name ci
+          git config --global core.autocrlf false
+      - name: Generated files are up to date
+        run: npm run check
+      - name: Unit and lifecycle tests
+        run: npm test
+      - name: Archive integration and public example (golden)
+        run: npm run test:integration

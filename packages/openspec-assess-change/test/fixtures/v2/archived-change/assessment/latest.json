@@ -1,0 +1,13 @@
+{
+  "assessmentId": "f1ec548a94fe49a0f6f7ff610f7475e425c7cb8a65e197443ad189b38c85b885",
+  "history": [
+    {
+      "assessmentId": "f1ec548a94fe49a0f6f7ff610f7475e425c7cb8a65e197443ad189b38c85b885",
+      "stage": "planning"
+    }
+  ],
+  "kind": "openspec-assess.latest",
+  "manifestDigest": "sha256:e64b792e7519ed2ac1be19e903629a4d55e7a5964a13c78033dcaf7a0b13d444",
+  "schemaVersion": 1,
+  "stage": "planning"
+}
