@@ -7,7 +7,7 @@ import {
   effectiveFrom, exportOverrides, preview, matrix, setEstimate, setEstimateFromText, setResource, resetEstimate, setModelField, setPath, resetToDefaults,
   compareReports, reportBytes, allLevels, provenanceCard, configDigestText, WEIGHT_LABEL, WEIGHT_HELP,
   setResourceFromText, parseRequiredInt, parsePercentBp, setTimePenalty, economicsView, CLEAR_HELP,
-  WEIGHT_HEADER, weightHelp, allowedSummary, toggleAllowedEffort, LAST_EFFORT_MESSAGE, parseMultiplier, formatMultiplier, isMultiplierDraft, nextFieldText,
+  WEIGHT_HEADER, weightHelp, allowedSummary, toggleAllowedEffort, LAST_EFFORT_MESSAGE, parseMultiplier, formatMultiplier, isMultiplierDraft, nextFieldText, defaultViewEffort, setModelIdentity,
 } from '../configurator/model.mjs';
 import { startServer, resolveRequestPath } from '../src/node/server.mjs';
 import { canonicalStringify, FACTOR_IDS, formatScore, parseScore, mergeConfig } from '../src/core/index.mjs';
@@ -156,6 +156,53 @@ test('9.7 provenance card resolves supporting evidence, origin and inherited ide
   const moved = mergeConfig(d, { kind: 'openspec-assess.overrides', schemaVersion: 3, set: { models: [{ id: 'codex.sol', modelId: 'gpt-6.2-sol' }] } });
   const c3 = provenanceCard(moved.models.find((m) => m.id === 'codex.sol').quality.apply.high.logic, benchmarks(), { phase: 'apply', factor: 'logic' });
   assert.deepEqual(c3.inheritedFrom, { modelId: 'gpt-6.1-sol', harness: 'codex', status: 'heuristic' });
+});
+
+test('12.2 model identity edits normalize the editor and provenance cards before loading a profile', () => {
+  const d = defaults();
+  const before = setResource(setEstimate(effectiveFrom(d, null), 'codex.sol', 'verify', 'high', 'logic', 9000), 'codex.sol', 'minutes', 'apply', 'high', 17000);
+  const sol = (c) => c.models.find((m) => m.id === 'codex.sol');
+  const original = sol(before);
+  const moved = setModelIdentity(before, d, 'codex.sol', 'modelId', 'gpt-6.2-sol');
+  assert.equal(sol(moved).identity.status, 'unconfirmed');
+  assert.equal(sol(moved).clientModelId, null);
+  const card = provenanceCard(sol(moved).quality.apply.medium.logic, benchmarks(), { phase: 'apply', factor: 'logic' });
+  assert.deepEqual(card.inheritedFrom, { modelId: original.modelId, harness: original.harness, status: 'heuristic' });
+  assert.equal(card.status, 'heuristic');
+  assert.deepEqual(sol(moved).quality.verify.high.logic, original.quality.verify.high.logic, 'user quality override and its origin survive');
+  assert.deepEqual(sol(moved).resources.time.minutes.apply.high, original.resources.time.minutes.apply.high, 'user resource override and its origin survive');
+  assert.deepEqual(sol(effectiveFrom(d, exportOverrides(d, moved))), sol(moved), 'export/import sees the same normalized model');
+  const r = preview({ defaults: d, edited: moved, profile: loadJson('examples/golden/profile.json'), benchmarks: benchmarks(), asOf: AS_OF });
+  assert.equal(r.ok, true, JSON.stringify(r.errors));
+  assert.deepEqual(sol(r.config), sol(moved), 'preview uses the same identity and provenance as the editor');
+  assert.equal(sol(before).identity.status, 'confirmed', 'the prior editor state was not mutated');
+  const movedAgain = setModelIdentity(moved, d, 'codex.sol', 'modelId', 'gpt-6.3-sol');
+  assert.equal(sol(movedAgain).identity.status, 'unconfirmed');
+  assert.deepEqual(sol(movedAgain).quality.apply.medium.logic.inheritedFrom, card.inheritedFrom, 'repeated edits retain the real source identity');
+  const restored = setModelIdentity(movedAgain, d, 'codex.sol', 'modelId', original.modelId);
+  assert.equal(configDigestText(restored), configDigestText(before), 'reverting identity restores derived metadata without dropping user overrides');
+});
+
+test('12.2 identity normalization preserves explicit imported metadata and records', () => {
+  const d = defaults();
+  const imported = effectiveFrom(d, {
+    kind: 'openspec-assess.overrides', schemaVersion: 3,
+    set: { models: [{
+      id: 'codex.sol', clientModelId: 'custom-client-alias',
+      identity: { status: 'unconfirmed', note: 'Custom identity needs manual verification' },
+      quality: { apply: { medium: { logic: { value: 7000, status: 'heuristic', basis: 'Explicit imported prior' } } } },
+    }] },
+  });
+  const sol = (c) => c.models.find((m) => m.id === 'codex.sol');
+  const moved = setModelIdentity(imported, d, 'codex.sol', 'modelId', 'gpt-6.2-sol');
+  assert.deepEqual(sol(moved).identity, sol(imported).identity);
+  assert.equal(sol(moved).clientModelId, 'custom-client-alias');
+  assert.deepEqual(sol(moved).quality.apply.medium.logic, sol(imported).quality.apply.medium.logic, 'explicit imported record is not replaced by a generated default');
+  const changedWhileMoved = setEstimate(moved, 'codex.sol', 'verify', 'low', 'logic', 8700, 'own runs after the identity edit');
+  const restored = setModelIdentity(changedWhileMoved, d, 'codex.sol', 'modelId', sol(imported).modelId);
+  assert.deepEqual(sol(restored).quality.verify.low.logic, sol(changedWhileMoved).quality.verify.low.logic, 'an override created after moving survives a revert');
+  assert.deepEqual(sol(restored).identity, sol(imported).identity);
+  assert.deepEqual(sol(resetToDefaults(restored, d, { models: ['codex.sol'] })), sol(effectiveFrom(d, null)), 'model reset restores the complete shipped model');
 });
 
 test('7.1 schema errors are reported with field paths instead of a preview', () => {
@@ -344,6 +391,19 @@ test('11.1/11.2 allowed efforts: summary in supported order, at least one effort
   assert.equal(matrix(only, 'apply', { 'codex.sol': 'max' })[0].cells.find((c) => c.modelId === 'codex.sol').effort, 'max', 'view effort is independent of allowed efforts');
   const reordered = toggleAllowedEffort(toggleAllowedEffort(cfg, 'codex.sol', 'low', false).config, 'codex.sol', 'low', true).config;
   assert.equal(configDigestText(reordered), configDigestText(cfg), 'toggling back restores the same config');
+});
+
+test('12.1 allowed efforts never change a column whose viewing selector has not been used', () => {
+  const cfg = effectiveFrom(defaults(), null);
+  const viewed = (config, phase) => matrix(config, phase)[0].cells.find((c) => c.modelId === 'codex.sol').effort;
+  const changed = toggleAllowedEffort(cfg, 'codex.sol', 'medium', false);
+  assert.equal(changed.ok, true);
+  assert.ok(!changed.config.models.find((m) => m.id === 'codex.sol').efforts.includes('medium'));
+  for (const phase of ['apply', 'verify']) {
+    assert.equal(viewed(cfg, phase), 'medium');
+    assert.equal(viewed(changed.config, phase), 'medium');
+  }
+  assert.equal(defaultViewEffort({ supportedEfforts: ['low', 'high'], efforts: ['high'] }), 'low', 'without medium, the first supported effort is the default');
 });
 
 test('11.3 weight column header is short; field names and help keep the phase meaning', () => {

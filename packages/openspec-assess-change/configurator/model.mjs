@@ -66,10 +66,9 @@ export function configDigestText(config) {
   return canonicalStringify(c);
 }
 
-// Default effort shown in a model column: medium when supported, otherwise the first allowed effort.
+// Default effort shown in a model column: independent of the efforts allowed for recommendations.
 export function defaultViewEffort(model) {
-  const allowed = model.efforts || model.supportedEfforts;
-  return allowed.includes('medium') ? 'medium' : allowed[0];
+  return model.supportedEfforts.includes('medium') ? 'medium' : model.supportedEfforts[0];
 }
 
 // Matrix rows for one phase. `view` maps model id → effort to display (view state only).
@@ -275,6 +274,44 @@ export function setModelField(config, modelId, field, value) {
   m[field] = value;
   if (field === 'efforts' && Array.isArray(value) && value.length === 0) delete m.efforts;
   return next;
+}
+
+// Identity edits need the same normalization as preview/export, even before a profile is loaded.
+// First remove only metadata and records generated for the previous identity. Otherwise a second
+// edit would export those derived values as explicit overrides and retain stale inheritance on revert.
+export function setModelIdentity(config, defaults, modelId, field, value) {
+  if (field !== 'modelId' && field !== 'harness') throw new RangeError(`not a model identity field: ${field}`);
+  const next = setModelField(config, modelId, field, value);
+  const previous = config.models.find((m) => m.id === modelId);
+  const model = next.models.find((m) => m.id === modelId);
+  const base = defaults.models.find((m) => m.id === modelId);
+  if (base) {
+    const generated = effectiveFrom(defaults, {
+      kind: 'openspec-assess.overrides', schemaVersion: 3,
+      set: { models: [{ id: modelId, modelId: previous.modelId, harness: previous.harness }] },
+    }).models.find((m) => m.id === modelId);
+    const same = (a, b) => a !== undefined && b !== undefined && canonicalStringify(a) === canonicalStringify(b);
+    for (const key of ['identity', 'clientModelId']) {
+      if (same(model[key], generated[key])) model[key] = clone(base[key]);
+    }
+    for (const phase of PHASES) {
+      for (const [effort, row] of Object.entries(base.quality[phase])) {
+        for (const factor of Object.keys(row)) {
+          if (same(model.quality[phase][effort]?.[factor], generated.quality[phase][effort][factor])) {
+            model.quality[phase][effort][factor] = clone(row[factor]);
+          }
+        }
+      }
+      for (const { path: [group, key] } of Object.values(RESOURCE_KINDS)) {
+        for (const [effort, record] of Object.entries(base.resources[group][key][phase])) {
+          if (same(model.resources[group][key][phase][effort], generated.resources[group][key][phase][effort])) {
+            model.resources[group][key][phase][effort] = clone(record);
+          }
+        }
+      }
+    }
+  }
+  return effectiveFrom(defaults, exportOverrides(defaults, next));
 }
 
 // Reset selected parts to the shipped defaults.

@@ -1,7 +1,7 @@
 // Browser UI for the configurator. All calculation goes through configurator/model.mjs → src/core.
 import {
   effectiveFrom, exportOverrides, preview, matrix, allLevels, setEstimate, setEstimateFromText, setResource, resetEstimate, resetResource,
-  setPath, setModelField, resetToDefaults, compareReports, parseIntOrNull, reportBytes, provenanceCard, defaultViewEffort,
+  setPath, setModelField, setModelIdentity, resetToDefaults, compareReports, parseIntOrNull, reportBytes, provenanceCard, defaultViewEffort,
   parseMultiplier, configDigestText, WEIGHT_LABEL, WEIGHT_HELP, WEIGHT_RELEVANCE_HELP, SCORE_HELP,
   CLEAR_HELP, POLICY_HELP, PENALTY_FIELDS, setResourceFromText, parseRequiredInt, parsePercentBp, setTimePenalty, economicsView,
   WEIGHT_HEADER, weightHelp, allowedSummary, allowedEfforts, toggleAllowedEffort, isMultiplierDraft, nextFieldText, formatMultiplier,
@@ -149,26 +149,28 @@ function placeFloating(panel, anchor, preferredWidth = 300) {
   panel.style.top = `${Math.min(top, Math.max(margin, vh - h - margin))}px`;
 }
 
-const tipLayer = { panel: null, anchor: null, pinned: false };
+const tipLayer = { panel: null, anchor: null, pinned: false, expandsAnchor: false };
 
 function hideTip() {
   if (tipLayer.panel) tipLayer.panel.hidden = true;
-  if (tipLayer.anchor) tipLayer.anchor.setAttribute('aria-expanded', 'false');
+  if (tipLayer.anchor && tipLayer.expandsAnchor) tipLayer.anchor.setAttribute('aria-expanded', 'false');
   tipLayer.anchor = null;
   tipLayer.pinned = false;
+  tipLayer.expandsAnchor = false;
 }
 
-function showTip(anchor, text, pinned = false) {
+function showTip(anchor, text, { pinned = false, expandsAnchor = true } = {}) {
   if (!tipLayer.panel) {
     tipLayer.panel = el('div', { class: 'float-panel float-tip', role: 'tooltip', id: 'float-tip' });
     document.body.append(tipLayer.panel);
   }
-  if (tipLayer.anchor && tipLayer.anchor !== anchor) tipLayer.anchor.setAttribute('aria-expanded', 'false');
+  if (tipLayer.anchor && tipLayer.anchor !== anchor) hideTip();
   tipLayer.panel.textContent = text;
   tipLayer.panel.hidden = false;
   tipLayer.anchor = anchor;
   tipLayer.pinned = pinned;
-  anchor.setAttribute('aria-expanded', 'true');
+  tipLayer.expandsAnchor = expandsAnchor;
+  if (expandsAnchor) anchor.setAttribute('aria-expanded', 'true');
   placeFloating(tipLayer.panel, anchor, 300);
 }
 
@@ -178,10 +180,10 @@ function infoButton(label, text) {
   const btn = el('button', { type: 'button', class: 'info', 'aria-label': `${label}: пояснение`, 'aria-describedby': id, 'aria-expanded': 'false' }, 'ⓘ');
   btn.addEventListener('mouseenter', () => { if (!tipLayer.pinned) showTip(btn, text); });
   btn.addEventListener('mouseleave', () => { if (!tipLayer.pinned && tipLayer.anchor === btn) hideTip(); });
-  btn.addEventListener('focus', () => showTip(btn, text, tipLayer.pinned && tipLayer.anchor === btn));
+  btn.addEventListener('focus', () => showTip(btn, text, { pinned: tipLayer.pinned && tipLayer.anchor === btn }));
   btn.addEventListener('blur', () => { if (tipLayer.anchor === btn) hideTip(); });
   btn.addEventListener('click', () => {
-    if (tipLayer.anchor === btn && tipLayer.pinned) hideTip(); else showTip(btn, text, true);
+    if (tipLayer.anchor === btn && tipLayer.pinned) hideTip(); else showTip(btn, text, { pinned: true });
   });
   return el('span', { class: 'cellwrap' }, btn, el('span', { id, class: 'sr-only', text }));
 }
@@ -201,11 +203,22 @@ function effortsMultiselect(m) {
     if (e.key === 'Escape' && state.openMenu === m.id) { e.preventDefault(); closeMenu(true); }
     if (e.key === 'ArrowDown' && state.openMenu !== m.id) { e.preventDefault(); openMenu(m.id); }
   });
-  btn.addEventListener('focus', () => { btn.title = allowedSummary(state.edited.models.find((x) => x.id === m.id)); });
+  const showSummary = () => {
+    if (state.openMenu === m.id) return;
+    const text = allowedSummary(state.edited.models.find((x) => x.id === m.id));
+    btn.title = text;
+    // aria-expanded belongs to the menu; showing its summary must not change it.
+    showTip(btn, text, { expandsAnchor: false });
+  };
+  btn.addEventListener('mouseenter', () => { if (!tipLayer.pinned) showSummary(); });
+  btn.addEventListener('mouseleave', () => { if (tipLayer.anchor === btn && document.activeElement !== btn) hideTip(); });
+  btn.addEventListener('focus', showSummary);
+  btn.addEventListener('blur', () => { if (tipLayer.anchor === btn) hideTip(); });
   return el('div', { class: 'ms' }, el('div', { class: 'muted small', text: 'Разрешены для рекомендаций' }), btn);
 }
 
 function openMenu(modelId) {
+  hideTip();
   state.openMenu = modelId;
   state.menuMessage = '';
   const m = state.edited.models.find((x) => x.id === modelId);
@@ -348,7 +361,18 @@ function renderMatrix() {
         el('button', { type: 'button', onclick: () => { state.levels = m.id; render(); $('levels-panel').scrollIntoView({ block: 'nearest' }); }, text: 'Все уровни', 'aria-label': `${m.displayName}: все уровни effort` }),
         el('label', {}, 'modelId', (() => {
           const i = el('input', { type: 'text', value: m.modelId, 'aria-label': `${m.id} modelId`, style: 'width:120px' });
-          i.addEventListener('change', () => update(setModelField(state.edited, m.id, 'modelId', i.value.trim())));
+          i.addEventListener('change', () => {
+            try {
+              const next = setModelIdentity(state.edited, state.defaults, m.id, 'modelId', i.value.trim());
+              state.inputErrors = [];
+              update(next);
+            } catch (e) {
+              state.inputErrors = e.errors || [{ path: `${m.id} modelId`, message: e.message }];
+              showErrors(state.inputErrors);
+              setStatus('Ввод отклонён: значение не изменено', 'err');
+              i.setAttribute('aria-invalid', 'true');
+            }
+          });
           return i;
         })()),
         el('label', { style: 'flex-direction:row;gap:4px;align-items:center' }, (() => {

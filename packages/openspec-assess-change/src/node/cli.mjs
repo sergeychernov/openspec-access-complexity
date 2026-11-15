@@ -7,6 +7,8 @@ import { versionIdentity, PACKAGE_VERSION } from '../core/version.mjs';
 import { canonicalStringify } from '../core/canonical.mjs';
 import { RANKING_KEYS } from '../core/ranking.mjs';
 import { formatMicros } from '../core/render-md.mjs';
+import { formatScore } from '../core/scale.mjs';
+import { POLICY_ID, formatFraction } from '../core/policy.mjs';
 import {
   AssessError, readJsonFile, canonicalDigest, sha256, assertContained, atomicWriteFile, canonicalBytes, samePath,
 } from './fsio.mjs';
@@ -104,12 +106,32 @@ function summarize(report, assessmentId, reused) {
   L.push(`Change ${report.change.name} (${report.change.stage}): volume ${idx(p.volume)}, complexity ${idx(p.complexity)}, risk ${idx(p.risk)}, uncertainty ${idx(p.uncertainty)} bp`);
   for (const key of RANKING_KEYS) {
     const r = report.rankings[key];
-    L.push(`\n${key}: ${r.status}`);
+    const isNew = r.policy.id === POLICY_ID;
+    const isApi = key.endsWith('/api');
+    L.push(`\n${key}: ${r.status}. ${r.message}`);
+    L.push(`  Quality floor ${formatScore(r.qualityFloorBp) ?? 'unknown'} (0–100).`);
+    if (isNew) {
+      const t = r.policy.timePenalty;
+      L.push(`  Policy ${r.policy.id} v${r.policy.version}: C = upper ${isApi ? 'API cost' : 'subscription load'} forecast; T = typical minutes; S = C × (1 + ${t.rateBp / 10000} × max(0, T − ${t.graceMinutes}) / ${t.intervalMinutes}). S is for comparison, not a price or quota draw.`);
+    } else L.push(`  Policy ${r.policy.id} v${r.policy.version} (legacy); utility 0–100.`);
     for (const c of r.candidates.slice(0, 5)) {
-      const res = key.endsWith('/api')
+      const res = isApi
         ? (c.resource.status === 'known' ? `${formatMicros(c.resource.typicalMicros, c.resource.currency)} typical` : 'cost unknown')
         : (c.resource.status === 'known' ? `load ${c.resource.typicalLoad} typical, capacity ${c.resource.capacity.status}` : 'load unknown');
-      L.push(`  ${c.rank}. ${c.candidateId} @${c.recommendedEffort} [${c.group}] fit ${c.suitability.valueBp ?? '—'} · utility ${c.utilityBp ?? '—'} · ${res}`);
+      let economic;
+      if (isNew) {
+        const a = c.adjusted;
+        const cost = a.cost === null ? 'unknown' : (isApi ? formatMicros(a.cost, c.resource.currency) : `${a.cost} load units`);
+        const multiplier = a.multiplier ? `×${formatFraction(a.multiplier, 6)}` : 'unknown';
+        let adjusted = `unknown (missing ${a.missing.join(', ')})`;
+        if (a.complete) {
+          adjusted = isApi
+            ? `${c.resource.currency} ${formatFraction({ numerator: a.value.numerator, denominator: (BigInt(a.value.denominator) * 1000000n).toString() }, 6)}`
+            : `${formatFraction(a.value, 6)} load units`;
+        }
+        economic = `C ${cost} (upper) · T ${c.time.typicalMinutes ?? 'unknown'} min (typical) · penalty ${multiplier} · S ${adjusted} (comparison)`;
+      } else economic = `utility ${formatScore(c.utilityBp) ?? 'unknown'}`;
+      L.push(`  ${c.rank}. ${c.candidateId} @${c.recommendedEffort} [${c.group}] fit ${formatScore(c.suitability.valueBp) ?? 'unknown'} · ${economic} · ${res}`);
     }
     if (r.candidates.length > 5) L.push(`  … ${r.candidates.length - 5} more in report.md`);
     if (r.excluded.length) L.push(`  excluded: ${r.excluded.map((e) => e.candidateId).join(', ')}`);
